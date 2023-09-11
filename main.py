@@ -30,6 +30,8 @@ settings = {'AC_eta_ch': 0.95, # charge eff of power electronics
             'dataName': 'idc_positive_dummy.csv',
             'studyName': 'opportunity_hypothesis_2023_09_09',
             'horizon': 24*7, # horizon [h]
+            'control-horizon' : 24,
+            'duration': 24*365*100, # 100 years
             'C-rate': [1.0, 1.2], # C-rate for charge and discharge
             'lambda_cal': 1.0,
             'lambda_cyc': 1.0,
@@ -60,6 +62,7 @@ settings = {'AC_eta_ch': 0.95, # charge eff of power electronics
 def solve_optimisation(settings):
     dt = settings['dt']
     Nh = int(settings['horizon']/dt)
+    Nc = int(settings['control-horizon']/dt)
     
     bat_eta_ch, bat_eta_dc  = settings['bat_eta_ch'], settings['bat_eta_dc']
     AC_eta_ch,  AC_eta_dc   = settings['AC_eta_ch'],  settings['AC_eta_dc']
@@ -111,14 +114,13 @@ def solve_optimisation(settings):
     bat['Tk0']  = cp.Parameter(1)
       
     # AC-side variables: 
-    AC = {}
     bat['AC_Pch']    = bat['Pch']/eta_ch
     bat['AC_Pdisch'] = bat['Pdisch'] * eta_dc
     bat['AC_Pnett']  = bat['AC_Pch'] - bat['AC_Pdisch']
     
     
-    # Arbitrage variables: 
-    c_kWh = cp.Parameter(Nh)
+    # Arbitrage variables:
+    bat['c_kWh'] = cp.Parameter(Nh)
       
     # Constraints:
     constr += [ bat['FEC'][0] == bat['FEC0'],
@@ -132,7 +134,6 @@ def solve_optimisation(settings):
     
     constr += [  0 <= bat['rate_ch'], bat['rate_ch'] <= Cr_ch ] 
     constr += [  0 <= bat['rate_dc'], bat['rate_dc'] <= Cr_dc ] 
-      
       
     for i in range(Nh):
         constr += [ bat['Qloss_cyc_ch'][i] >= settings['Qloss_cyc_Ab_ch'][:,0] * bat['rate_ch'][i] + settings['Qloss_cyc_Ab_ch'][:,1] ]
@@ -153,22 +154,39 @@ def solve_optimisation(settings):
     bat['Qloss_cal_tot']    = cp.sum(bat['Qloss_cal'])*dt
     bat['Qloss_tot']        = bat['Qloss_cyc_tot']  + bat['Qloss_cal_tot']
     
+    bat['J_ageing']  = cost_whole*bat['Qloss_tot']
+    bat['J_revenue'] = dt*(bat['c_kWh'].T @ bat['AC_Pnett'])  # Negative revenue
+    bat['J'] = bat['J_ageing'] + bat['J_revenue']
+          
+    prob = cp.Problem(cp.Minimize(bat['J']), constr)
     
-    J_ageing  = cost_whole*bat['Qloss_tot']
-    J_revenue = dt*(c_kWh.T @ bat['AC_Pnett'])  # Negative revenue
+    solution = {key: np.array([]) for key in bat.keys()}
+
+
+    while(SOH0 >= 0.8):
+        # set initial values: 
+        bat['c_kWh'].value = idc[:Nh] 
+        bat['E0'].value = np.array([E0])
+        bat['SOH0'].value = np.array([SOH0])
+        bat['FEC0'].value = np.array([FEC0])
+        bat['Tk0'].value  = np.array([Tk0])
+        
+        prob.solve(solver=cp.GUROBI, verbose=False)
+        
+        # refresh initial values:
+        E0 = bat['Ebatt'].value[Nc]
+        SOH0 -= #TODO
+        
+        
+        for key in solution.keys():
+            solution[key] = np.concatenate((solution[key], bat[key].value))
+        
+        
+        
+
     
-    J = J_revenue + J_ageing
-      
-      
-    # set initial values: 
-    c_kWh.value = idc[:Nh] 
-    bat['E0'].value = np.array([E0])
-    bat['SOH0'].value = np.array([SOH0])
-    bat['FEC0'].value = np.array([FEC0])
-    bat['Tk0'].value  = np.array([Tk0])
     
-    prob = cp.Problem(cp.Minimize(J), constr)
-    prob.solve(solver=cp.GUROBI, verbose=True)
+    
       # Plot
     #   plt.figure(figsize=(10, 6))
     #   plt.plot(bat['AC_Pnett'].value, label="bat['AC_Pnett'].value")
