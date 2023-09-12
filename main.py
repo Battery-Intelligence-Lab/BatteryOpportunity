@@ -75,7 +75,6 @@ def solve_optimisation(settings):
     
     E0 = settings['E0']
     SOH0 = settings['SOH0']
-    FEC0 = settings['FEC0']
     Tk0 = settings['Tk0']
     idc = np.genfromtxt('data/' + settings['dataName'])
     
@@ -93,7 +92,7 @@ def solve_optimisation(settings):
     bat['Ebatt'] = cp.Variable(Nh+1) # Energy inside bat kWh
     bat['SOC'] = cp.Variable(Nh+1)
     bat['SOCavg'] = (bat['SOC'][1:] + bat['SOC'][:-1])/2.0
-    bat['FEC'] = cp.Variable(Nh+1)
+    bat['dFEC'] = 0.5*dt*bat['Pabs']/Enom # FEC per time step. 
       
       
     # Temperature model: 
@@ -104,14 +103,13 @@ def solve_optimisation(settings):
     bat['Tc'] = bat['Tk'] - KELVIN
     
     # ageing params: 
-    bat['Qloss_cyc_ch'] = cp.Variable(Nh) # Qloss cycle charging
-    bat['Qloss_cal']    = cp.Variable(Nh) # Qloss calendar
+    bat['Qloss_cyc_ch_per_h'] = cp.Variable(Nh) # Qloss cycle charging
+    bat['Qloss_cal_per_h']    = cp.Variable(Nh) # Qloss calendar
     
     # initial params:
-    bat['FEC0'] = cp.Parameter(1)
-    bat['E0']   = cp.Parameter(1)
-    bat['SOH0'] = cp.Parameter(1)
-    bat['Tk0']  = cp.Parameter(1)
+    bat['E0']   = cp.Parameter(1, name="E0")
+    bat['SOH0'] = cp.Parameter(1, name="SOH0")
+    bat['Tk0']  = cp.Parameter(1, name="Tk0")
       
     # AC-side variables: 
     bat['AC_Pch']    = bat['Pch']/eta_ch
@@ -120,11 +118,9 @@ def solve_optimisation(settings):
     
     
     # Arbitrage variables:
-    bat['c_kWh'] = cp.Parameter(Nh)
+    bat['c_kWh'] = cp.Parameter(Nh, name="c_kWh")
       
     # Constraints:
-    constr += [ bat['FEC'][0] == bat['FEC0'],
-    bat['FEC'][1:] == bat['FEC'][:-1] + 0.5*dt*bat['Pabs']/Enom ]
     
     constr += [ 0 <= bat['Ebatt'][1:]]
     constr += [ bat['Ebatt'][1:] <= Enom * bat['SOH0']]
@@ -136,10 +132,10 @@ def solve_optimisation(settings):
     constr += [  0 <= bat['rate_dc'], bat['rate_dc'] <= Cr_dc ] 
       
     for i in range(Nh):
-        constr += [ bat['Qloss_cyc_ch'][i] >= settings['Qloss_cyc_Ab_ch'][:,0] * bat['rate_ch'][i] + settings['Qloss_cyc_Ab_ch'][:,1] ]
+        constr += [ bat['Qloss_cyc_ch_per_h'][i] >= settings['Qloss_cyc_Ab_ch'][:,0] * bat['rate_ch'][i] + settings['Qloss_cyc_Ab_ch'][:,1] ]
     
     for i in range(Nh):
-        constr += [ bat['Qloss_cal'][i] >= settings['Qloss_cal'][:,0] + settings['Qloss_cal'][:,1]*bat['SOCavg'][i] + settings['Qloss_cal'][:,2]*bat['Tk_avg'][i] ]
+        constr += [ bat['Qloss_cal_per_h'][i] >= settings['Qloss_cal'][:,0] + settings['Qloss_cal'][:,1]*bat['SOCavg'][i] + settings['Qloss_cal'][:,2]*bat['Tk_avg'][i] ]
     
     
     # Temperature model: k*((Tk-Tamb)*alpha + Qcell)
@@ -147,39 +143,45 @@ def solve_optimisation(settings):
     constr += [ bat['Tk'][1:] == bat['Tk'][:-1] + 3600*dt*bat['dTk']]                        
                       
     
-    # objective: 
-    bat['Qloss_cyc_dc_tot'] = bat['FEC'][-1]*settings['Qloss_cyc_dc']
-    bat['Qloss_cyc_ch_tot'] = cp.sum(bat['Qloss_cyc_ch'])*dt
-    bat['Qloss_cyc_tot']    = bat['Qloss_cyc_ch_tot'] + bat['Qloss_cyc_dc_tot']
-    bat['Qloss_cal_tot']    = cp.sum(bat['Qloss_cal'])*dt
-    bat['Qloss_tot']        = bat['Qloss_cyc_tot']  + bat['Qloss_cal_tot']
+    # objective:
+    bat['Qloss_cyc_dc']     = bat['dFEC']*settings['Qloss_cyc_dc']
+    bat['Qloss_cyc_ch']     = bat['Qloss_cyc_ch_per_h']*dt
+    bat['Qloss_cyc']        = bat['Qloss_cyc_dc'] + bat['Qloss_cyc_ch']
+    bat['Qloss_cal']        = bat['Qloss_cal_per_h']*dt
+    bat['Qloss']            = bat['Qloss_cyc']  + bat['Qloss_cal']
     
-    bat['J_ageing']  = cost_whole*bat['Qloss_tot']
-    bat['J_revenue'] = dt*(bat['c_kWh'].T @ bat['AC_Pnett'])  # Negative revenue
-    bat['J'] = bat['J_ageing'] + bat['J_revenue']
+    bat['Qloss_lambda']     = settings['lambda_cyc']*bat['Qloss_cyc']  + settings['lambda_cal']*bat['Qloss_cal']
+    bat['revenue']          = -dt*bat['c_kWh']*bat['AC_Pnett']
+    
+    bat['J_ageing_lambda']  = cost_whole*cp.sum(bat['Qloss_lambda'])
+    bat['J_revenue']        = -cp.sum(bat['revenue'])  # Negative revenue
+    bat['J'] = bat['J_revenue'] + bat['J_ageing_lambda']
           
     prob = cp.Problem(cp.Minimize(bat['J']), constr)
     
     solution = {key: np.array([]) for key in bat.keys()}
+    bat['c_kWh'].value = idc[:Nh] 
+    bat['E0'].value = np.array([E0])
+    bat['SOH0'].value = np.array([SOH0])
+    bat['Tk0'].value  = np.array([Tk0])
+    prob.solve(solver=cp.GUROBI, verbose=True)
 
-
-    while(SOH0 >= 0.8):
-        # set initial values: 
-        bat['c_kWh'].value = idc[:Nh] 
-        bat['E0'].value = np.array([E0])
-        bat['SOH0'].value = np.array([SOH0])
-        bat['FEC0'].value = np.array([FEC0])
-        bat['Tk0'].value  = np.array([Tk0])
+    # while(SOH0 >= 0.8):
+    #     # set initial values: 
+    #     bat['c_kWh'].value = idc[:Nh] 
+    #     bat['E0'].value = np.array([E0])
+    #     bat['SOH0'].value = np.array([SOH0])
+    #     bat['Tk0'].value  = np.array([Tk0])
         
-        prob.solve(solver=cp.GUROBI, verbose=False)
+    #     prob.solve(solver=cp.GUROBI, verbose=False)
         
-        # refresh initial values:
-        E0 = bat['Ebatt'].value[Nc]
-        SOH0 -= #TODO
+    #     # refresh initial values:
+    #     E0 = bat['Ebatt'].value[Nc]
+    #     SOH0 -= #TODO
         
         
-        for key in solution.keys():
-            solution[key] = np.concatenate((solution[key], bat[key].value))
+    #     for key in solution.keys():
+    #         solution[key] = np.concatenate((solution[key], bat[key].value))
         
         
         
@@ -217,7 +219,7 @@ def solve_optimisation(settings):
     # print("bat['SOC'] : ", bat['SOC'].value, '\n')
     # print("max['SOC'] : ", np.max(bat['SOC'].value), '\n')
     # print("bat['SOCavg'] : ", bat['SOCavg'].value, '\n')
-    # print("bat['FEC'] : ", bat['FEC'].value, '\n')
+    print("bat['FEC'] : ", np.cumsum(bat['dFEC'].value), '\n')
     # print("bat['Tc'] : ",  bat['Tc'].value, '\n')
     # print("Jcal total: ", bat['Qloss_cal_tot'].value, '\n')
     # print("Jcyc total: ", bat['Qloss_cyc_tot'].value, '\n')
