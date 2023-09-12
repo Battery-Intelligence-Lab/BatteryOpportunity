@@ -42,7 +42,7 @@ settings = {'AC_eta_ch': 0.95, # charge eff of power electronics
             'bat_eta_dc': 0.95, # discharge eff of battery
             'dataName': 'idc_positive_dummy.csv',
             'studyName': 'opportunity_hypothesis_2023_09_09',
-            'horizon': 4, # horizon [h]
+            'horizon': 24*7, # horizon [h]
             'control-horizon' : 1,
             'duration': 24*365*100, # 100 years
             'C-rate': [1.0, 1.2], # C-rate for charge and discharge
@@ -177,16 +177,16 @@ constr['Tk_update'] = m.addConstr(bat['Tk'][1:] == bat['Tk'][:-1] + 3600*dt*bat[
 
 # infeasible_Ebatt = np.cumsum(infeasible_Pnett*dt)
 
-m.addConstr(bat['Pch'] == np.array([  0.00000005 ,   0.        , 111.42766698, 111.42766698,
-        111.42766698,   0.        ,   0.        , 111.42766698,
-        111.42766698, 111.42766698,   0.        ,   0.        ,
-        118.97233302, 111.42766698,   0.        ,   0.        ]))
+# m.addConstr(bat['Pch'] == np.array([  0.        ,   0.        ,  75.80712788,  75.80712788,
+#        121.57809984,   0.        ,   0.        ,  41.24909223,
+#        121.57809984,  67.57280793,   0.        ,   0.        ,
+#        101.68350168, 121.57809984,   0.        ,   0.        ])  )
 
 
-m.addConstr(bat['Pdisch'] == np.array([  0.        ,   0.        ,   0.        ,   0.        ,
-         0.        , 230.4       , 103.88300095,   0.        ,
-         0.        ,   0.        , 103.88300095, 230.4       ,
-         0.        ,   0.        , 230.4       ,   0.        ]) )
+# m.addConstr(bat['Pdisch'] == np.array([  0.        ,   0.        ,   0.        ,   0.        ,
+#          0.        , 230.4       ,  42.7923556 ,   0.        ,
+#          0.        ,   0.        ,   0.        , 230.4       ,
+#          0.        ,   0.        , 223.26160152,   0.        ])  )
 
 
 bat['c_kWh'] = idc[:Nh]
@@ -233,27 +233,29 @@ print("Jcal total: ", bat['Qloss_cal'].getValue(), '\n')
 print("Jcyc total: ", bat['Qloss_cyc'].getValue(), '\n')
 
 solution = {key: np.array([]) for key in bat.keys()}
- # while(SOH0 >= 0.999):
- #     print('Now SOH is: ', SOH0)
- #     # set initial values: 
- #     bat['c_kWh'].value = idc[:Nh] 
- #     bat['E0'].value = np.array([E0])
- #     bat['SOH0'].value = np.array([SOH0])
- #     bat['Tk0'].value  = np.array([Tk0])
+while(SOH0 >= 0.999):
+    print('Now SOH is: ', SOH0)
+    # set initial values: 
+    # bat['c_kWh'].value = idc[:Nh] 
+    # bat['E0'].value = np.array([E0])
+    # bat['SOH0'].value = np.array([SOH0])
+    # bat['Tk0'].value  = np.array([Tk0])
+    
+    m.optimize()
  
- #     prob.solve(solver=cp.GUROBI, verbose=False, warm_start=True)
+    # prob.solve(solver=cp.GUROBI, verbose=False, warm_start=True)
  
- #     # refresh initial values:
- #     E0    = bat['Ebatt'].value[Nc]
- #     Tk0   = bat['Tk'].value[Nc]
- #     SOH0 -= np.sum(bat['Qloss'].value[:Nc])
+    # refresh initial values:
+    # E0    = bat['Ebatt'].value[Nc]
+    # Tk0   = bat['Tk'].value[Nc]
+    # SOH0 -= np.sum(bat['Qloss'].value[:Nc])
  
- #     for key in solution.keys():
- #         if(bat[key].value.size==Nh+1):
- #             solution[key] = np.concatenate((solution[key], bat[key].value[1:Nc+1]))
- #         elif(bat[key].value.size==Nh):
- #             solution[key] = np.concatenate((solution[key], bat[key].value[:Nc]))       
-        
+    # for key in solution.keys():
+    #     if(bat[key].value.size==Nh+1):
+    #         solution[key] = np.concatenate((solution[key], bat[key].value[1:Nc+1]))
+    #     elif(bat[key].value.size==Nh):
+    #         solution[key] = np.concatenate((solution[key], bat[key].value[:Nc]))       
+      
   #  return solution
     
 

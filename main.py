@@ -136,7 +136,7 @@ for i in range(settings['Qloss_cyc_Ab_ch'].shape[0]):
     constr += [ bat['Qloss_cyc_ch_per_h'] >= (settings['Qloss_cyc_Ab_ch'][i,0] * bat['rate_ch'] + settings['Qloss_cyc_Ab_ch'][i,1]) ]
 
 for i in range(settings['Qloss_cal'].shape[0]):
-    constr += [ bat['Qloss_cal_per_h'] >= settings['Qloss_cal'][i,0] + settings['Qloss_cal'][i,1]*bat['SOCavg'] + settings['Qloss_cal'][i,2]*bat['Tk_avg'] ]
+    constr += [ bat['Qloss_cal_per_h'] >= (settings['Qloss_cal'][i,0] + settings['Qloss_cal'][i,1]*bat['SOCavg'] + settings['Qloss_cal'][i,2]*bat['Tk_avg']) ]
 
 # Temperature model: k*((Tk-Tamb)*alpha + Qcell)
 constr += [ bat['Tk'][0] == bat['Tk0']]
@@ -176,7 +176,7 @@ while(SOH0 >=1):
     bat['SOH0'].value = np.array([SOH0])
     bat['Tk0'].value  = np.array([Tk0])
     
-    prob.solve(solver=cp.GUROBI, verbose=True, warm_start=True, NumericFocus=3)
+    prob.solve(solver=cp.GUROBI, verbose=True, warm_start=True, NumericFocus=3, FeasibilityTol=1e-9, OptimalityTol=1e-9)
     
     # refresh initial values:
     E0    = bat['Ebatt'].value[Nc]
