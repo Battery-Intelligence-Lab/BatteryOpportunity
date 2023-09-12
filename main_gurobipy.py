@@ -43,7 +43,7 @@ settings = {'AC_eta_ch': 0.95, # charge eff of power electronics
             'dataName': 'idc_positive_dummy.csv',
             'studyName': 'opportunity_hypothesis_2023_09_09',
             'horizon': 4, # horizon [h]
-            'control-horizon' : 24,
+            'control-horizon' : 1,
             'duration': 24*365*100, # 100 years
             'C-rate': [1.0, 1.2], # C-rate for charge and discharge
             'lambda_cal': 1.0,
@@ -91,18 +91,24 @@ SOH0 = settings['SOH0']
 Tk0 = settings['Tk0']
 idc = np.genfromtxt('data/' + settings['dataName'])
 
+Qloss_cyc_Ab_ch = settings['Qloss_cyc_Ab_ch']
+Qloss_cal = settings['Qloss_cal']
+
 
 # Create a new model
 m = gp.Model("battery_optimisation")
+m.setParam("NumericFocus", 3)
+m.setParam('FeasibilityTol', 1e-9)
+m.setParam('OptimalityTol', 1e-9)
 
 # Battery variables:
 bat = {}
-bat['Pch']    = m.addMVar(Nh,    lb=0, ub=(Cr_ch*Enom), name="Pch")
+bat['Pch']    = m.addMVar(Nh, lb=0, ub=(Cr_ch*Enom), name="Pch")
 bat['Pdisch'] = m.addMVar(Nh, lb=0, ub=(Cr_dc*Enom), name="Pdisch")
 bat['Pnett']  = bat['Pch'] - bat['Pdisch']
 bat['Pabs']   = bat['Pch'] + bat['Pdisch']
 
-bat['Ebatt'] = m.addMVar(Nh+1, lb=0, name="Ebatt") # Energy inside bat kWh
+bat['Ebatt'] = m.addMVar(Nh+1, lb=0, ub=Enom, name="Ebatt") # Energy inside bat kWh
 bat['SOC']   = m.addMVar(Nh+1, lb=0, ub=1, name="SOC")
 bat['SOCavg'] = (bat['SOC'][1:] + bat['SOC'][:-1])/2.0
 bat['dFEC'] = 0.5*dt*bat['Pabs']/Enom # FEC per time step. 
@@ -133,17 +139,54 @@ constr['Ebatt_update'] = m.addConstr(bat['Ebatt'][1:] == bat['Ebatt'][:-1] + dt*
 
 constr['SOC_update']   = m.addConstr(bat['SOC'] == bat['Ebatt']/(Enom)) # #TODO add SOH0
 
+for i in range(Qloss_cyc_Ab_ch.shape[0]): 
+    m.addConstr(bat['Qloss_cyc_ch_per_h'] >= Qloss_cyc_Ab_ch[i,0] * bat['Pch']/Enom + Qloss_cyc_Ab_ch[i,1])
 
 
-m.addConstrs((bat['Qloss_cyc_ch_per_h'] >= settings['Qloss_cyc_Ab_ch'][i,0] * bat['Pch']/Enom + settings['Qloss_cyc_Ab_ch'][i,1] for i in range(settings['Qloss_cyc_Ab_ch'].shape[0])   
-))
-
-m.addConstrs((bat['Qloss_cal_per_h'] >= settings['Qloss_cal'][i,0] + settings['Qloss_cal'][i,1]*bat['SOCavg'] + settings['Qloss_cal'][i,2]*bat['Tk_avg'] for i in range(settings['Qloss_cal'].shape[0])))
-
+for i in range(settings['Qloss_cal'].shape[0]): 
+    m.addConstr(bat['Qloss_cal_per_h'] >= (Qloss_cal[i,0] + Qloss_cal[i,1]*bat['SOCavg'] + Qloss_cal[i,2]*bat['Tk_avg'])) 
+ 
 
 # Temperature model: k*((Tk-Tamb)*alpha + Qcell)
 constr['Tk_init']   = m.addConstr(bat['Tk'][0] == Tk0)
 constr['Tk_update'] = m.addConstr(bat['Tk'][1:] == bat['Tk'][:-1] + 3600*dt*bat['dTk'])                      
+
+
+# m.addConstr(bat['Pch'] == np.array([  0.        ,   0.        ,  75.80712788,  75.80712788,
+#        121.57809984,   0.        ,   0.        ,  41.24909223,
+#        121.57809984,  67.57280793,   0.        ,   0.        ,
+#        101.68350168, 121.57809984,   0.        ,   0.        ]))
+
+# m.addConstr(bat['Pdisch'] == np.array([  0.        ,   0.        ,   0.        ,   0.        ,
+#          0.        , 230.4       ,  42.7923556 ,   0.        ,
+#          0.        ,   0.        ,   0.        , 230.4       ,
+#          0.        ,   0.        , 223.26160152,   0.        ]))
+
+
+# infeasible_Pch = np.array([  0.        ,   0.        , 111.42766698, 111.42766698,
+#         111.42766698,   0.        ,   0.        , 111.42766698,
+#         111.42766698, 111.42766698,   0.        ,   0.        ,
+#         118.97233302, 111.42766698,   0.        ,   0.        ])
+
+# infeasible_Pdisch = np.array([  0.        ,   0.        ,   0.        ,   0.        ,
+#          0.        , 230.4       , 103.88300095,   0.        ,
+#          0.        ,   0.        , 103.88300095, 230.4       ,
+#          0.        ,   0.        , 230.4       ,   0.        ])
+
+# infeasible_Pnett = infeasible_Pch - infeasible_Pdisch
+
+# infeasible_Ebatt = np.cumsum(infeasible_Pnett*dt)
+
+m.addConstr(bat['Pch'] == np.array([  0.00000005 ,   0.        , 111.42766698, 111.42766698,
+        111.42766698,   0.        ,   0.        , 111.42766698,
+        111.42766698, 111.42766698,   0.        ,   0.        ,
+        118.97233302, 111.42766698,   0.        ,   0.        ]))
+
+
+m.addConstr(bat['Pdisch'] == np.array([  0.        ,   0.        ,   0.        ,   0.        ,
+         0.        , 230.4       , 103.88300095,   0.        ,
+         0.        ,   0.        , 103.88300095, 230.4       ,
+         0.        ,   0.        , 230.4       ,   0.        ]) )
 
 
 bat['c_kWh'] = idc[:Nh]
@@ -155,12 +198,12 @@ bat['Qloss_cyc']        = bat['Qloss_cyc_dc'] + bat['Qloss_cyc_ch']
 bat['Qloss_cal']        = bat['Qloss_cal_per_h']*dt
 bat['Qloss']            = bat['Qloss_cyc']  + bat['Qloss_cal']
 
-bat['Qloss_lambda']     = settings['lambda_cal']*bat['Qloss_cal'] #+ settings['lambda_cyc']*bat['Qloss_cyc'] # + 
+bat['Qloss_lambda']     = settings['lambda_cal']*bat['Qloss_cal'] + settings['lambda_cyc']*bat['Qloss_cyc'] 
 bat['revenue']          = -dt*bat['c_kWh']*bat['AC_Pnett']
 
 bat['J_ageing_lambda']  = cost_whole*bat['Qloss_lambda'].sum()
 bat['J_revenue']        = -bat['revenue'].sum()  # Negative revenue
-bat['J'] = bat['J_revenue'] + bat['J_ageing_lambda']
+bat['J']                = bat['J_revenue'] + bat['J_ageing_lambda']
 
 m.setObjective(bat['J'], GRB.MINIMIZE)
   
@@ -174,8 +217,21 @@ elapsed_time = end_time - start_time
 
 print(f"Elapsed time: {elapsed_time} seconds")
 
- 
- 
+print("bat['AC_Pnett'] : ", bat['AC_Pnett'].getValue(), '\n')
+print("bat['Pnett'] : ", bat['Pnett'].getValue(), '\n')
+print("bat['Pch']*bat['Pdisch'] : ", bat['Pch'].X *  bat['Pdisch'].X, '\n')
+
+print("bat['Ebatt'] : ", bat['Ebatt'].X, '\n')
+print("bat['SOC'] : ", bat['SOC'].X, '\n')
+print("max['SOC'] : ", np.max(bat['SOC'].X), '\n')
+print("bat['SOCavg'] : ", bat['SOCavg'].getValue(), '\n')
+print("bat['FEC'] : ", np.cumsum(bat['dFEC'].getValue()), '\n')
+print("bat['Tk'] : ",  bat['Tk'].X, '\n')
+print("bat['Tk_avg'] : ",  bat['Tk_avg'].getValue(), '\n')
+print("bat['Tc'] : ",  bat['Tc'].getValue(), '\n')
+print("Jcal total: ", bat['Qloss_cal'].getValue(), '\n')
+print("Jcyc total: ", bat['Qloss_cyc'].getValue(), '\n')
+
 solution = {key: np.array([]) for key in bat.keys()}
  # while(SOH0 >= 0.999):
  #     print('Now SOH is: ', SOH0)
