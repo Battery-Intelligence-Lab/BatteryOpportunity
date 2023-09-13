@@ -56,13 +56,13 @@ legend('1','2','3','4');
 
 figure;
 semilogx(allCases.lambda_cyc, allCases.revenue_at_EOL,'d-');
-grid on; xlabel('\lambda cycle (years)'); ylabel('Revenue (EUR)');
+grid on; xlabel('\lambda cycle (-)'); ylabel('Revenue (EUR)');
 title(strrep(study_name,'_',' '));
 %legend('1','2','3','4');
 
 figure;
 semilogx(allCases.lambda_cal, allCases.revenue_at_EOL,'d-');
-grid on; xlabel('\lambda calendar (years)'); ylabel('Revenue (EUR)');
+grid on; xlabel('\lambda calendar (-)'); ylabel('Revenue (EUR)');
 title(strrep(study_name,'_',' '));
 %legend('1','2','3','4');
 
