@@ -1,25 +1,22 @@
-clear all; close all; clc;
+clear variables; close all; clc;
 
 folder = 'results/sensitivity_2023_09_13_real';
-study_name = "lambda_cyc";
 
-caseNow = load_case(folder, study_name);
 idc = readmatrix('data/idc_positive_dummy.csv')';
-dth = 0.25;
-allCases = []; 
-%% Don't forget that we probably didn't save the very initial value of the things.
-% Process cases:
-for i=1:length(caseNow)
-    caseNow(i).SOH = 1 - [0, cumsum(caseNow(i).Qloss)];
-    caseNow(i).time_h = (0:length(caseNow(i).SOH)-1)*dth;
-    caseNow(i).time_d = caseNow(i).time_h/24;
-    caseNow(i).time_y = caseNow(i).time_d/365;
 
-    caseNow(i).cumulative_revenue = [0, cumsum(caseNow(i).revenue)];
-    allCases.lambda_cyc(i) = caseNow(i).settings.lambda_cyc;
-    allCases.lambda_cal(i) = caseNow(i).settings.lambda_cal;
-    allCases.revenue_at_EOL(i) = caseNow(i).cumulative_revenue(end); % PS: not exactly 80%
-end
+% load cal lambda sensitivity
+now_cal = load_case(folder, "lambda_cal");
+[now_cal, all_cal] = process_and_verify(now_cal);
+
+% load cyc lambda sensitivity
+now_cyc = load_case(folder, "lambda_cyc");
+[now_cyc, all_cyc] = process_and_verify(now_cyc);
+
+% load both lambda sensitivity  
+now_both = load_case(folder, "both");
+[now_both, all_both] = process_and_verify(now_both);
+
+% Don't forget that we probably didn't save the very initial value of the things.
 
 %% SOH vs time
 figure;
@@ -55,15 +52,17 @@ legend('1','2','3','4');
 %% Revenue by lambda cyc/cal: 
 
 figure;
-semilogx(allCases.lambda_cyc, allCases.revenue_at_EOL,'d-');
-grid on; xlabel('\lambda cycle (-)'); ylabel('Revenue (EUR)');
-title(strrep(study_name,'_',' '));
-%legend('1','2','3','4');
+semilogx(all_cyc.lambda_cyc, all_cyc.revenue_at_EOL/1e3,'d-');
+grid on; xlabel('\lambda (-)'); ylabel('Revenue (thousand EUR)');
 
-figure;
-semilogx(allCases.lambda_cal, allCases.revenue_at_EOL,'d-');
-grid on; xlabel('\lambda calendar (-)'); ylabel('Revenue (EUR)');
-title(strrep(study_name,'_',' '));
-%legend('1','2','3','4');
+hold on;
+
+semilogx(all_cal.lambda_cal, all_cal.revenue_at_EOL/1e3,'o-');
+semilogx(all_both.lambda_cal, all_both.revenue_at_EOL/1e3,'x-');
+
+legend('\lambda-cycle perturbation', '\lambda-calendar perturbation', '\lambda-both perturbation',...
+       'Location','northwest')
+
+
 
 
