@@ -175,14 +175,17 @@ def solve_optimisation(settings):
     solution['settings'] = settings
     
     while(SOH0 >= settings['EOL']):
-       # print('Now SOH is: ', SOH0)
+        print('Now SOH is: ', SOH0)
         # set initial values: 
         bat['c_kWh'].value = idc[indices] 
-        bat['E0'].value = np.array([E0])
+        bat['E0'].value = np.array([max(E0,0)])
         bat['SOH0'].value = np.array([SOH0])
         bat['Tk0'].value  = np.array([Tk0])
         
-        prob.solve(solver=cp.GUROBI, verbose=False, warm_start=True, NumericFocus=3, FeasibilityTol=1e-9, OptimalityTol=1e-9)
+        try:
+            prob.solve(solver=cp.GUROBI, verbose=False, warm_start=True, NumericFocus=3, FeasibilityTol=1e-9, OptimalityTol=1e-9)
+        except: # This is added because there was a numeric problem with Gurobi
+            prob.solve(solver=cp.SCIPY, scipy_options={"method": "highs",'options':{'tol':1e-10, 'autoscale':True}}, verbose=True)
      #   print("bat['AC_Pnett'] : ", bat['AC_Pnett'].value, '\n')
 
         for key in bat.keys():
@@ -213,20 +216,10 @@ lambda_trials = [0.00001, 0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3,
                  1.25, 1.5, 2, 4, 8, 16, 25, 50]
 
 
-# Change only lambda_cal
-for i, L in enumerate(lambda_trials):
-    print(f"Starting cal: {i}-th trial for lambda = {L}")
-    start_time = time.time()
-    settings['lambda_cal'] = L  # lambda_cal = 50 is max same for cycle. 
-    sol = solve_optimisation(settings)
-    sio.savemat(folder_name+"/lambda_cal_"+str(i)+"_.mat", sol)
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-
-    print(f"Elapsed time: {elapsed_time} seconds") 
-
 # Change only lambda_cyc
 for i, L in enumerate(lambda_trials):
+    if(i<=29):
+        continue
     print(f"Starting cyc: {i}-th trial for lambda = {L}")
     start_time = time.time()
     settings['lambda_cyc'] = L  # lambda_cal = 50 is max same for cycle. 
@@ -236,19 +229,33 @@ for i, L in enumerate(lambda_trials):
     elapsed_time = end_time - start_time
 
     print(f"Elapsed time: {elapsed_time} seconds")
- 
-# Change both lambda_cal and lambda_cyc
-for i, L in enumerate(lambda_trials):
-    print(f"Starting both: {i}-th trial for lambda = {L}")
-    start_time = time.time()
-    settings['lambda_cyc'] = L  # lambda_cal = 50 is max same for cycle. 
-    settings['lambda_cal'] = L  # lambda_cal = 50 is max same for cycle. 
-    sol = solve_optimisation(settings)
-    sio.savemat(folder_name+"/both_"+str(i)+"_.mat", sol)
-    end_time = time.time()
-    elapsed_time = end_time - start_time
 
-    print(f"Elapsed time: {elapsed_time} seconds")   
+# # Change only lambda_cal
+# for i, L in enumerate(lambda_trials):
+#     print(f"Starting cal: {i}-th trial for lambda = {L}")
+#     start_time = time.time()
+#     settings['lambda_cal'] = L  # lambda_cal = 50 is max same for cycle. 
+#     sol = solve_optimisation(settings)
+#     sio.savemat(folder_name+"/lambda_cal_"+str(i)+"_.mat", sol)
+#     end_time = time.time()
+#     elapsed_time = end_time - start_time
+
+#     print(f"Elapsed time: {elapsed_time} seconds") 
+
+
+ 
+# # Change both lambda_cal and lambda_cyc
+# for i, L in enumerate(lambda_trials):
+#     print(f"Starting both: {i}-th trial for lambda = {L}")
+#     start_time = time.time()
+#     settings['lambda_cyc'] = L  # lambda_cal = 50 is max same for cycle. 
+#     settings['lambda_cal'] = L  # lambda_cal = 50 is max same for cycle. 
+#     sol = solve_optimisation(settings)
+#     sio.savemat(folder_name+"/both_"+str(i)+"_.mat", sol)
+#     end_time = time.time()
+#     elapsed_time = end_time - start_time
+
+#     print(f"Elapsed time: {elapsed_time} seconds")   
 
     
 
