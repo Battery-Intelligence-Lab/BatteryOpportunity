@@ -205,7 +205,8 @@ def solve_optimisation(settings):
     
 
 
-folder_name = 'results/sensitivity_2023_09_13_real'
+#folder_name = 'results/sensitivity_2023_09_13_real'
+folder_name = 'C:/D/OneDrive - Nexus365/Proj/BatteryOpportunityCost/results/sensitivity_2023_09_13_real'
 try:
     os.mkdir(folder_name)
 except:
@@ -213,34 +214,36 @@ except:
 
 lambda_trials = [0.00001, 0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 
                  0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99, 1, 1.01, 1.02, 1.05, 1.1, 
-                 1.25, 1.5, 2, 4, 8, 16, 25, 50]
+                 1.25, 1.5, 2, 4, 8, 16, 25, 50, 10, 12, 14, 11, 13, 9]
 
 
 # Change only lambda_cyc
-for i, L in enumerate(lambda_trials):
-    if(i<=29):
-        continue
-    print(f"Starting cyc: {i}-th trial for lambda = {L}")
-    start_time = time.time()
-    settings['lambda_cyc'] = L  # lambda_cal = 50 is max same for cycle. 
-    sol = solve_optimisation(settings)
-    sio.savemat(folder_name+"/lambda_cyc_"+str(i)+"_.mat", sol)
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-
-    print(f"Elapsed time: {elapsed_time} seconds")
-
-# # Change only lambda_cal
 # for i, L in enumerate(lambda_trials):
-#     print(f"Starting cal: {i}-th trial for lambda = {L}")
+#     if(i<=29):
+#         continue
+#     print(f"Starting cyc: {i}-th trial for lambda = {L}")
 #     start_time = time.time()
-#     settings['lambda_cal'] = L  # lambda_cal = 50 is max same for cycle. 
+#     settings['lambda_cyc'] = L  # lambda_cal = 50 is max same for cycle. 
 #     sol = solve_optimisation(settings)
-#     sio.savemat(folder_name+"/lambda_cal_"+str(i)+"_.mat", sol)
+#     sio.savemat(folder_name+"/lambda_cyc_"+str(i)+"_.mat", sol)
 #     end_time = time.time()
 #     elapsed_time = end_time - start_time
 
-#     print(f"Elapsed time: {elapsed_time} seconds") 
+#     print(f"Elapsed time: {elapsed_time} seconds")
+
+# # Change only lambda_cal
+for i, L in enumerate(lambda_trials):
+    if(i<32):
+        continue
+    print(f"Starting cal: {i}-th trial for lambda = {L}")
+    start_time = time.time()
+    settings['lambda_cal'] = L  # lambda_cal = 50 is max same for cycle. 
+    sol = solve_optimisation(settings)
+    sio.savemat(folder_name+"/lambda_cal_"+str(i)+"_.mat", sol)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    print(f"Elapsed time: {elapsed_time} seconds") 
 
 
  
