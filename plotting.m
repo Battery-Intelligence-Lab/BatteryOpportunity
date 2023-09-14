@@ -18,6 +18,12 @@ now_both = load_case(folder, "both");
 
 % Don't forget that we probably didn't save the very initial value of the things.
 
+%% Settings:
+text_font = 12;
+lw = {'LineWidth',1.3};
+lw2 = {'LineWidth',1.5};
+
+
 %% SOH vs time
 figure;
 for i=1:length(caseNow)
@@ -59,10 +65,18 @@ hold on;
 
 semilogx(all_cal.lambda_cal, all_cal.revenue_at_EOL/1e3,'o-');
 semilogx(all_both.lambda_cal, all_both.revenue_at_EOL/1e3,'x-');
+xline(1)
 
 legend('\lambda-cycle perturbation', '\lambda-calendar perturbation', '\lambda-both perturbation',...
        'Location','northwest')
 
-
+set(gca,...
+'Units','normalized',...
+'FontUnits','points',...
+'FontWeight','normal',...
+'FontSize',text_font,...
+'FontName','Times');
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+set(gcf,'renderer','Painters')
 
 

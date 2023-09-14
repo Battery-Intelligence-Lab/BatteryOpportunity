@@ -12,6 +12,7 @@ for i=1:length(caseNow)
     allCases.lambda_cyc(i) = caseNow(i).settings.lambda_cyc;
     allCases.lambda_cal(i) = caseNow(i).settings.lambda_cal;
     allCases.revenue_at_EOL(i) = caseNow(i).cumulative_revenue(end); % PS: not exactly 80%
+    allCases.FEC_at_EOL(i)      = sum(caseNow(i).dFEC
 
     % Verify cases:
     true_Qloss_cyc_dc = caseNow(i).dFEC*caseNow(i).settings.Qloss_cyc_dc;
