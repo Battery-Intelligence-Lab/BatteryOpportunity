@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Sep 17 04:34:35 2023
+
+@author: Volkan Kumtepeli
+"""
+
 import cvxpy as cp
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,62 +14,7 @@ import os
 
 KELVIN = 273.15 
 
-cyc_ag_ch = np.genfromtxt('data/cyc_ageing_ch.csv', delimiter=",")
-
-#cal ageing: 
-# func.k_cal(0,18+KELVIN) = 4.3027e-05
-# func.k_cal(1,18+KELVIN) = 5.6590e-04
-# func.k_cal(0,60+KELVIN) = 1.2575e-04
-# func.k_cal(1,60+KELVIN) = 1.6539e-03
-# lets do two planes:
-    # (i) [func.k_cal(0,18+KELVIN), func.k_cal(1,18+KELVIN), func.k_cal(0,60+KELVIN)]
-    # (ii) [func.k_cal(1,18+KELVIN), func.k_cal(0,60+KELVIN), func.k_cal(1,60+KELVIN)]
-    
-    # Results from fitting:  f(SOC, Tk) = a + b*SOC + c*Tk
-        # (i)  a,b,c = [-5.3041e-04,   5.2287e-04,  1.9696e-06]
-        # (ii) a,b,c = [-85.0423e-04,  15.2813e-04, 2.5904e-05]
-
-# We divide by 8 because of the square-root effect, it is too much! 
-cal_ag = np.genfromtxt('data/cal_ageing_discounted.csv', delimiter=",")
- 
-# Settings: 
-settings = {'AC_eta_ch': 0.95, # charge eff of power electronics
-            'AC_eta_dc': 0.95, # discharge eff of power electronics
-            'bat_eta_ch': 0.95, # charge eff of battery
-            'bat_eta_dc': 0.95, # discharge eff of battery
-            'dataName': 'idc_positive_dummy.csv',
-            'studyName': 'opportunity_hypothesis_2023_09_09',
-            'horizon': 24*7, # horizon [h]
-            'control-horizon' : 24,
-            'duration': 24*365*100, # 100 years
-            'C-rate': [1.0, 1.2], # C-rate for charge and discharge
-            'lambda_cal': 1.0,
-            'lambda_cyc': 1.0,
-            'dt' : 0.25, 
-            'EOL': 0.8,
-            'price_kWhcap' : 250,
-            'Enom' : 24*8,  # kWh
-            'SOCmin': 0.0, 
-            'SOCmax': 1.0,
-            # very initial values: 
-            'Tamb' : 18 + KELVIN, # Ambient temperature
-            'Tk0'  : KELVIN + 18,
-            'E0'   : 0.0,
-            'SOH0' : 1.0,
-            'FEC0' : 0.0,
-            # PWA
-            'Qloss_cyc_Ab_ch' : cyc_ag_ch, # A_ch * rate_ch , b_ch [dSOH/hr/rate]
-            'Qloss_cyc_dc' : 3.18e-7,   # per total FEC
-            'Qloss_cal' : cal_ag, # Calendar ageing PWA
-            # Temperature model: k*((Tk-Tamb)*alpha + Qcell)
-            'k_Tcell': 0.014, # (1/(param.m_cell*param.c_p_cell))
-            'alpha_Tcell': 0.0192, # param.cell.alpha.fan_100*param.A_cell
-            # normally below numbers should be quadratic but considering now linear
-            'Qcell_ch': 0.575, # Qcell / C-rate -> func.dQcell( 3,0.5,KELVIN+25)
-            'Qcell_dc': 0.410, # Qcell / C-rate -> func.dQcell(-3,0.5,KELVIN+25)
-            }
-
-def solve_optimisation(settings):
+def solve_optimisation(settings, print_SOH = True):
     dt = settings['dt']
     Nh = int(settings['horizon']/dt)
     Nc = int(settings['control-horizon']/dt)
@@ -202,97 +154,3 @@ def solve_optimisation(settings):
         indices %= idc.size # Loop through 
         
     return solution
-    
-
-
-#folder_name = 'results/sensitivity_2023_09_13_real'
-folder_name = 'C:/D/OneDrive - Nexus365/Proj/BatteryOpportunityCost/results/sensitivity_2023_09_13_real'
-try:
-    os.mkdir(folder_name)
-except:
-    pass
-
-lambda_trials = [0.00001, 0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 
-                 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99, 1, 1.01, 1.02, 1.05, 1.1, 
-                 1.25, 1.5, 2, 4, 8, 16, 25, 50, 10, 12, 14, 11, 13, 9]
-
-
-# Change only lambda_cyc
-# for i, L in enumerate(lambda_trials):
-#     if(i<=29):
-#         continue
-#     print(f"Starting cyc: {i}-th trial for lambda = {L}")
-#     start_time = time.time()
-#     settings['lambda_cyc'] = L  # lambda_cal = 50 is max same for cycle. 
-#     sol = solve_optimisation(settings)
-#     sio.savemat(folder_name+"/lambda_cyc_"+str(i)+"_.mat", sol)
-#     end_time = time.time()
-#     elapsed_time = end_time - start_time
-
-#     print(f"Elapsed time: {elapsed_time} seconds")
-
-# # Change only lambda_cal
-for i, L in enumerate(lambda_trials):
-    if(i<32):
-        continue
-    print(f"Starting cal: {i}-th trial for lambda = {L}")
-    start_time = time.time()
-    settings['lambda_cal'] = L  # lambda_cal = 50 is max same for cycle. 
-    sol = solve_optimisation(settings)
-    sio.savemat(folder_name+"/lambda_cal_"+str(i)+"_.mat", sol)
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-
-    print(f"Elapsed time: {elapsed_time} seconds") 
-
-
- 
-# # Change both lambda_cal and lambda_cyc
-# for i, L in enumerate(lambda_trials):
-#     print(f"Starting both: {i}-th trial for lambda = {L}")
-#     start_time = time.time()
-#     settings['lambda_cyc'] = L  # lambda_cal = 50 is max same for cycle. 
-#     settings['lambda_cal'] = L  # lambda_cal = 50 is max same for cycle. 
-#     sol = solve_optimisation(settings)
-#     sio.savemat(folder_name+"/both_"+str(i)+"_.mat", sol)
-#     end_time = time.time()
-#     elapsed_time = end_time - start_time
-
-#     print(f"Elapsed time: {elapsed_time} seconds")   
-
-    
-
-      # Plot
-    #   plt.figure(figsize=(10, 6))
-    #   plt.plot(bat['AC_Pnett'].value, label="bat['AC_Pnett'].value")
-    # #  plt.plot(days, J, label="Total Aging (J)", linewidth=2)
-    #   plt.xlabel("Days")
-    #   plt.ylabel("Aging")
-    #   plt.title("Battery Aging over Time Approaching Expiration")
-    #   plt.legend()
-    #   plt.grid(True)
-    #   plt.show()
-      
-      
-    # Plot
-    # plt.figure(figsize=(10, 6))
-    # plt.plot(bat['SOC'].value, label="AC['SOC'].value")
-    # plt.xlabel("Days")
-    # plt.ylabel("Aging")
-    # plt.title("Battery Aging over Time Approaching Expiration")
-    # plt.legend()
-    # plt.grid(True)
-    # plt.show()
-    
-# print("bat['AC_Pnett'] : ", bat['AC_Pnett'].value, '\n')
-# print("bat['Pnett'] : ", bat['Pnett'].value, '\n')
-# print("bat['Pch']*bat['Pdisch'] : ", bat['Pch'].value *  bat['Pdisch'].value, '\n')
-
-# print("bat['Ebatt'] : ", bat['Ebatt'].value, '\n')
-# print("bat['SOC'] : ", bat['SOC'].value, '\n')
-# print("max['SOC'] : ", np.max(bat['SOC'].value), '\n')
-# print("bat['SOCavg'] : ", bat['SOCavg'].value, '\n')
-# print("bat['FEC'] : ", np.cumsum(bat['dFEC'].value), '\n')
-# print("bat['Tc'] : ",  bat['Tc'].value, '\n')
-# print("Jcal total: ", bat['Qloss_cal'].value, '\n')
-# print("Jcyc total: ", bat['Qloss_cyc'].value, '\n')
