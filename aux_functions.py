@@ -14,7 +14,7 @@ import os
 
 KELVIN = 273.15 
 
-def solve_optimisation(settings, print_SOH = True, constant_lambda = True):
+def solve_optimisation(settings, print_SOH = True, lambda_policy = "constant"):
     dt = settings['dt']
     Nh = int(settings['horizon']/dt)
     Nc = int(settings['control-horizon']/dt)
@@ -124,6 +124,9 @@ def solve_optimisation(settings, print_SOH = True, constant_lambda = True):
     
     solution['settings'] = settings
     
+    revenue_per_Qloss = 0 # a very small number. 
+    is_increasing = True
+    
     while(SOH0 >= settings['EOL']):
         print('Now SOH is: ', SOH0)
         # set initial values: 
@@ -133,7 +136,7 @@ def solve_optimisation(settings, print_SOH = True, constant_lambda = True):
         bat['Tk0'].value  = np.array([Tk0])
         
         
-        if(constant_lambda):
+        if(lambda_policy=="constant" or lambda_policy=="revenue_per_Qloss"):
             try:
                 prob.solve(solver=cp.GUROBI, verbose=False, warm_start=True, NumericFocus=3, FeasibilityTol=1e-9, OptimalityTol=1e-9)
             except: # This is added because there was a numeric problem with Gurobi
@@ -147,6 +150,31 @@ def solve_optimisation(settings, print_SOH = True, constant_lambda = True):
                 solution[key] = np.concatenate((solution[key], bat[key].value[1:Nc+1]))
             elif(bat[key].value.size==Nh):
                 solution[key] = np.concatenate((solution[key], bat[key].value[:Nc]))
+        
+        for key in ['lambda_cal', 'lambda_cyc']:
+            solution[key] = np.concatenate((solution[key], bat[key].value))
+                
+        if(lambda_policy == "revenue_per_Qloss"):
+            new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)
+       #     print(f"Revenue per loss {new_revenue_per_Qloss}")
+            if(revenue_per_Qloss < new_revenue_per_Qloss):
+                if(is_increasing):
+                    bat['lambda_cal'].value *= 1.05
+                    bat['lambda_cyc'].value *= 1.05
+                else:
+                    bat['lambda_cal'].value *= 0.95
+                    bat['lambda_cyc'].value *= 0.95                    
+            else:
+                is_increasing = not is_increasing
+                if(is_increasing):
+                    bat['lambda_cal'].value *= 1.05
+                    bat['lambda_cyc'].value *= 1.05
+                else:
+                    bat['lambda_cal'].value *= 0.95
+                    bat['lambda_cyc'].value *= 0.95                 
+                
+                
+            revenue_per_Qloss = new_revenue_per_Qloss
         
         # refresh initial values:
         E0    = bat['Ebatt'].value[Nc]
