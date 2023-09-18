@@ -14,7 +14,7 @@ import os
 
 KELVIN = 273.15 
 
-def solve_optimisation(settings, print_SOH = True):
+def solve_optimisation(settings, print_SOH = True, constant_lambda = True):
     dt = settings['dt']
     Nh = int(settings['horizon']/dt)
     Nc = int(settings['control-horizon']/dt)
@@ -65,6 +65,8 @@ def solve_optimisation(settings, print_SOH = True):
     bat['E0']   = cp.Parameter(1, name="E0", nonneg=True)
     bat['SOH0'] = cp.Parameter(1, name="SOH0", nonneg=True)
     bat['Tk0']  = cp.Parameter(1, name="Tk0", nonneg=True)
+    bat['lambda_cal'] = cp.Parameter(1, name="Tk0", nonneg=True)
+    bat['lambda_cyc'] = cp.Parameter(1, name="Tk0", nonneg=True)
       
     # AC-side variables: 
     bat['AC_Pch']    = bat['Pch']/eta_ch
@@ -94,15 +96,7 @@ def solve_optimisation(settings, print_SOH = True):
     # Temperature model: k*((Tk-Tamb)*alpha + Qcell)
     constr += [ bat['Tk'][0] == bat['Tk0']]
     constr += [ bat['Tk'][1:] == bat['Tk'][:-1] + 3600*dt*bat['dTk']]        
-    
-    # constr += [bat['Pch'] == np.array([  0.        ,   0.        ,  75.80712788,  75.80712788,
-    #        121.57809984,   0.        ,   0.        ,  41.24909223,
-    #        121.57809984,  67.57280793,   0.        ,   0.        ,
-    #        101.68350168, 121.57809984,   0.        ,   0.        ])]
-    # constr += [bat['Pdisch'] == np.array([  0.        ,   0.        ,   0.        ,   0.        ,
-    #          0.        , 230.4       ,  42.7923556 ,   0.        ,
-    #          0.        ,   0.        ,   0.        , 230.4       ,
-    #          0.        ,   0.        , 223.26160152,   0.        ])]                
+               
                      
     # objective:
     bat['Qloss_cyc_dc']     = bat['dFEC']*settings['Qloss_cyc_dc']
@@ -111,7 +105,7 @@ def solve_optimisation(settings, print_SOH = True):
     bat['Qloss_cal']        = bat['Qloss_cal_per_h']*dt
     bat['Qloss']            = bat['Qloss_cyc']  + bat['Qloss_cal']
     
-    bat['Qloss_lambda']     = settings['lambda_cal']*bat['Qloss_cal'] + settings['lambda_cyc']*bat['Qloss_cyc']
+    bat['Qloss_lambda']     = bat['lambda_cal']*bat['Qloss_cal'] + bat['lambda_cyc']*bat['Qloss_cyc']
     bat['revenue']          = -dt*cp.multiply(bat['c_kWh'], bat['AC_Pnett'])
     
     bat['J_ageing_lambda']  = cost_whole*cp.sum(bat['Qloss_lambda'])
@@ -123,6 +117,10 @@ def solve_optimisation(settings, print_SOH = True):
     solution = {key: np.array([]) for key in bat.keys()}
     
     indices = np.arange(Nh,dtype=np.int64)
+    indices %= idc.size # For simulations with Nh longer than idc.size
+    
+    bat['lambda_cal'].value = np.array([settings['lambda_cal']])
+    bat['lambda_cyc'].value = np.array([settings['lambda_cyc']])
     
     solution['settings'] = settings
     
@@ -134,11 +132,15 @@ def solve_optimisation(settings, print_SOH = True):
         bat['SOH0'].value = np.array([SOH0])
         bat['Tk0'].value  = np.array([Tk0])
         
-        try:
-            prob.solve(solver=cp.GUROBI, verbose=False, warm_start=True, NumericFocus=3, FeasibilityTol=1e-9, OptimalityTol=1e-9)
-        except: # This is added because there was a numeric problem with Gurobi
-            prob.solve(solver=cp.SCIPY, scipy_options={"method": "highs",'options':{'tol':1e-10, 'autoscale':True}}, verbose=True)
-     #   print("bat['AC_Pnett'] : ", bat['AC_Pnett'].value, '\n')
+        
+        if(constant_lambda):
+            try:
+                prob.solve(solver=cp.GUROBI, verbose=False, warm_start=True, NumericFocus=3, FeasibilityTol=1e-9, OptimalityTol=1e-9)
+            except: # This is added because there was a numeric problem with Gurobi
+                prob.solve(solver=cp.SCIPY, scipy_options={"method": "highs",'options':{'tol':1e-10, 'autoscale':True}}, verbose=True)
+         #   print("bat['AC_Pnett'] : ", bat['AC_Pnett'].value, '\n')     
+        else:
+            pass
 
         for key in bat.keys():
             if(bat[key].value.size==Nh+1):
