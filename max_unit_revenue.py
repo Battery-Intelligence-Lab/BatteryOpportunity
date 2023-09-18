@@ -28,11 +28,22 @@ settings = def_settings;
 #settings['EOL'] = 0.9999
 
 
-i = 1
+# i = 1
+# print("MPPT lambda optimisation is started!")
+# # ----> new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)
+# start_time = time.time()
+# sol = solve_optimisation(settings, True, "revenue_per_Qloss")
+# sio.savemat(folder_name+"/mppt_"+str(i)+"_.mat", sol)
+# end_time = time.time()
+# elapsed_time = end_time - start_time
+# print(f"Elapsed time: {elapsed_time} seconds")   
+
+i = 2
 print("MPPT lambda optimisation is started!")
+# ----> new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)/(1 + np.sum(np.abs(np.diff(bat['c_kWh'].value))))
 start_time = time.time()
 sol = solve_optimisation(settings, True, "revenue_per_Qloss")
 sio.savemat(folder_name+"/mppt_"+str(i)+"_.mat", sol)
 end_time = time.time()
 elapsed_time = end_time - start_time
-print(f"Elapsed time: {elapsed_time} seconds")   
+print(f"Elapsed time: {elapsed_time} seconds")  

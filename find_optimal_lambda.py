@@ -18,7 +18,7 @@ import itertools
 from default_settings import *
 from aux_functions import *
 
-folder_name = 'results/optimal_lambda_2023_09_17'
+folder_name = 'C:/D/OneDrive - Nexus365/Proj/BatteryOpportunityCost/results/optimal_lambda_2023_09_17'
 try:
     os.mkdir(folder_name)
 except:
@@ -53,6 +53,7 @@ def simulate_and_save(lambdas):
 mixed_lambda = itertools.product(range(4,17), range(4,11))  # [4,16], [4,11]
 
 for i, L in enumerate(mixed_lambda):
+    if(i<45): continue
     print(f"Starting both: {i}-th trial for lambda = {L}")
     start_time = time.time()
     settings['lambda_cyc'] = L[0]  # lambda_cal = 50 is max same for cycle. 

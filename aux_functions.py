@@ -155,7 +155,7 @@ def solve_optimisation(settings, print_SOH = True, lambda_policy = "constant"):
             solution[key] = np.concatenate((solution[key], bat[key].value))
                 
         if(lambda_policy == "revenue_per_Qloss"):
-            new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)
+            new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)/(1 + np.sum(np.abs(np.diff(bat['c_kWh'].value))))
        #     print(f"Revenue per loss {new_revenue_per_Qloss}")
             if(revenue_per_Qloss < new_revenue_per_Qloss):
                 if(is_increasing):
