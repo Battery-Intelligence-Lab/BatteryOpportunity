@@ -38,7 +38,12 @@ N_avg = avg_horizon/dt;
 N_case = length(caseNow.revenue);
 N_interest = floor(N_case/N_avg)*N_avg; 
 
-revenue_avg = sum(reshape(caseNow.revenue(1:N_interest),N_avg,[]));
+revenue_mat = reshape(caseNow.revenue(1:N_interest),N_avg,[]);
+revenue_std = std(revenue_mat);
+
+revenue_sum = sum(reshape(caseNow.revenue(1:N_interest),N_avg,[]));
+revenue_sum_normalised = revenue_sum./revenue_std;
+
 Qcal_avg    = sum(reshape(caseNow.Qloss_cal(1:N_interest),N_avg,[]));
 Qcyc_avg    = sum(reshape(caseNow.Qloss_cyc(1:N_interest),N_avg,[]));
 Qtot_avg    = Qcal_avg  +  Qcyc_avg;
