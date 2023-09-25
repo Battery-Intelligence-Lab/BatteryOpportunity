@@ -26,6 +26,7 @@ plot_folder = "plots";
 
 %%
 avg_horizon = 24*7; % 1 week of horizon
+cost_whole = 192*250/0.2;
 
 i_now = find(all_both.lambda_cyc == 1);
 
@@ -38,6 +39,15 @@ N_avg = avg_horizon/dt;
 N_case = length(caseNow.revenue);
 N_interest = floor(N_case/N_avg)*N_avg; 
 
+prices = repmat(idc,1, ceil(N_interest/length(idc)));
+prices = prices(1:N_interest);
+
+prices_mat = reshape(prices,N_avg,[]);
+prices_std = std(prices_mat);
+prices_mean= mean(prices_mat);
+prices_volatility = std(diff(prices_mat)./prices_mat(1:end-1,:));
+
+
 revenue_mat = reshape(caseNow.revenue(1:N_interest),N_avg,[]);
 revenue_std = std(revenue_mat);
 
@@ -47,6 +57,10 @@ revenue_sum_normalised = revenue_sum./revenue_std;
 Qcal_avg    = sum(reshape(caseNow.Qloss_cal(1:N_interest),N_avg,[]));
 Qcyc_avg    = sum(reshape(caseNow.Qloss_cyc(1:N_interest),N_avg,[]));
 Qtot_avg    = Qcal_avg  +  Qcyc_avg;
+
+
+revenue_per_Q = revenue_sum./Qtot_avg;
+lambda_per_Q = revenue_per_Q/cost_whole;
 
 T = table(Qcal_avg', Qcyc_avg', revenue_sum', 'VariableNames', ["Qcal","Qcyc","Revenue"]);
 
@@ -121,6 +135,10 @@ for i = 1:10%N_t
     % Update P
     P = forget_factor*(P - K*x'*P);
 end
+
+
+%% price -> std -> revenue/Q
+
 
 
 

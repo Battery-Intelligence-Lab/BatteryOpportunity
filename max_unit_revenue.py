@@ -23,7 +23,17 @@ settings['studyName']  = "mppt"
 # # ----> new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)
 #simulate_and_save(settings, i, revenue_per_Qloss)
 
-i = 2
-print("MPPT lambda optimisation is started!")
-# ----> new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)/(1 + np.sum(np.abs(np.diff(bat['c_kWh'].value))))
+# i = 2
+# print("MPPT lambda optimisation is started!")
+# # ----> new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)/(1 + np.sum(np.abs(np.diff(bat['c_kWh'].value))))
+# simulate_and_save(settings, i, revenue_per_Qloss)
+
+
+# ----> FAILED DONT TRY : new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)/(0.001 + np.std(bat['c_kWh'].value))
+# ----> FAILED DONT TRY : new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)/(0.001 + np.std(np.diff(bat['c_kWh'].value)/bat['c_kWh'].value[:-1])  )
+
+
+i = 3
+print("MPPT lambda optimisation std is started!")
+# ----> new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)/(0.001 + np.std(np.diff(bat['c_kWh'].value)/bat['c_kWh'].value[:-1])  )
 simulate_and_save(settings, i, revenue_per_Qloss)

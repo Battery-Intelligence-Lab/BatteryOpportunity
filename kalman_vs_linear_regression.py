@@ -39,7 +39,7 @@ class KalmanFilterLinearRegressionTwoMeasurements:
         self.H = None
         self.Q = Q
         self.R = R
-        self.P = np.eye(2)*0.001
+        self.P = np.eye(2)*1000000000
         self.x = np.zeros(2)
         
     def predict(self):
@@ -65,7 +65,7 @@ class KalmanFilterLinearRegressionTwoMeasurements:
         return [self.x[0] + self.x[1] * x_k for x_k in X]
 
 # Kalman filter parameters
-Q = np.eye(2) * 0.001
+Q = np.eye(2) * 0.00001
 R = np.array([[1, 0], [0, 1]])
 
 # Kalman filter with 2 measurements at a time
@@ -77,7 +77,7 @@ profit_kf_2_meas_pred = kf_lr_2_meas.predict_y(ageing)
 plt.figure(figsize=(12, 6))
 plt.scatter(ageing, profit, label='True Data', color='blue', s=10)
 plt.plot(ageing, profit_pred, label='Linear Regression', color='red')
-plt.plot(ageing, profit_kf_2_meas_pred, label='Kalman Filter LR (2 measurements)', color='orange')
+plt.plot(ageing, profit_kf_2_meas_pred, '--', label='Kalman Filter LR (2 measurements)', color='orange')
 plt.xlabel('Battery Ageing')
 plt.ylabel('Profit')
 plt.title('Comparison: Linear Regression vs. Kalman Filter LR (2 measurements)')

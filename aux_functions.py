@@ -193,12 +193,15 @@ def revenue_per_Qloss(settings, print_SOH = True):
     set_initial_values(bat,settings)
 
     while(bat['SOH0'].value >= settings['EOL']):
-        print('Now SOH is: ', bat['SOH0'].value[0])
+        print('Now SOH is: ', bat['SOH0'].value[0], 'lambda is: ', bat['lambda_cal'].value)
         solve(prob)
         update_solution(solution, bat, settings)
                 
-        new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)/(1 + np.sum(np.abs(np.diff(bat['c_kWh'].value))))
-         #    print(f"Revenue per loss {new_revenue_per_Qloss}")
+       # new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)/(1 + np.sum(np.abs(np.diff(bat['c_kWh'].value))))
+        new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)/(0.001 + np.std(np.diff(bat['c_kWh'].value)/bat['c_kWh'].value[:-1])  )
+
+        
+       #    print(f"Revenue per loss {new_revenue_per_Qloss}")
         if(revenue_per_Qloss < new_revenue_per_Qloss):
             if(is_increasing):
                 bat['lambda_cal'].value *= 1.05
@@ -267,6 +270,53 @@ def moving_least_squares(settings):
         print(f"Linear regression slope: {reg.coef_}, intercept: {reg.intercept_}")
         new_lambda = max(reg.coef_[0], 0.01)
         
+        bat['lambda_cyc'].value[0] = new_lambda
+        bat['lambda_cal'].value[0] = new_lambda
+                
+        # refresh initial values:
+        indices = (indices + Nc) % idc.size # Loop through 
+        bat['c_kWh'].value    = idc[indices] 
+        bat['E0'].value[0]    = max(bat['Ebatt'].value[Nc], 0)
+        bat['SOH0'].value[0] -= np.sum(bat['Qloss'].value[:Nc])
+        bat['Tk0'].value[0]   = bat['Tk'].value[Nc]
+        
+    return solution
+
+
+def moving_average_filter(settings):
+    dt, Nh, Nc = get_horizons(settings)
+    idc = np.genfromtxt('data/' + settings['dataName'])
+    window = settings['window_length_d']
+    
+    bat, constr = create_problem(settings)
+    
+    prob = cp.Problem(cp.Minimize(bat['J']), constr)
+    
+    solution = {key: np.array([]) for key in bat.keys()}
+    solution['settings'] = settings
+    
+    indices = np.arange(Nh,dtype=np.int64) % idc.size # For simulations with Nh longer than idc.size
+       
+    bat['c_kWh'].value = idc[indices]
+    set_initial_values(bat, settings)
+    
+    reve_per_Qtot = np.array([])
+    
+    cost_whole = settings['Enom'] * settings['price_kWhcap'] / (1.0 - settings['EOL'])
+    
+    while(bat['SOH0'].value >= settings['EOL']):
+        print('Now SOH is: ', bat['SOH0'].value[0], "lambda: ", bat['lambda_cyc'].value[0])
+        
+        solve(prob)
+        update_solution(solution, bat, settings)
+        
+        if(reve_per_Qtot.size == window):
+            reve_per_Qtot = np.delete(reve_per_Qtot, 0)
+
+        reve_per_Qtot = np.append(reve_per_Qtot, max(0.01, np.sum(bat['revenue'].value)/np.sum(bat['Qloss'].value)/cost_whole))
+
+        new_lambda = settings['meanFunction'](reve_per_Qtot);
+
         bat['lambda_cyc'].value[0] = new_lambda
         bat['lambda_cal'].value[0] = new_lambda
                 
