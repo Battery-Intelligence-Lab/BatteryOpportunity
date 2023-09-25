@@ -14,10 +14,15 @@ import os
 
 KELVIN = 273.15 
 
-def solve_optimisation(settings, print_SOH = True, lambda_policy = "constant"):
+
+def get_horizons(settings):
     dt = settings['dt']
     Nh = int(settings['horizon']/dt)
     Nc = int(settings['control-horizon']/dt)
+    return dt, Nh, Nc
+
+def create_problem(settings):
+    dt, Nh, Nc = get_horizons(settings)
     
     bat_eta_ch, bat_eta_dc  = settings['bat_eta_ch'], settings['bat_eta_dc']
     AC_eta_ch,  AC_eta_dc   = settings['AC_eta_ch'],  settings['AC_eta_dc']
@@ -27,12 +32,7 @@ def solve_optimisation(settings, print_SOH = True, lambda_policy = "constant"):
     Enom =  settings['Enom']
     cost_whole = Enom * settings['price_kWhcap'] / (1.0 - EOL)
     Cr_ch, Cr_dc = settings['C-rate'][0], settings['C-rate'][1]
-    
-    E0 = settings['E0']
-    SOH0 = settings['SOH0']
-    Tk0 = settings['Tk0']
-    idc = np.genfromtxt('data/' + settings['dataName'])
-    
+      
     constr = []
     
     # Battery variables:
@@ -112,75 +112,125 @@ def solve_optimisation(settings, print_SOH = True, lambda_policy = "constant"):
     bat['J_revenue']        = -cp.sum(bat['revenue'])  # Negative revenue
     bat['J']                = bat['J_revenue'] + bat['J_ageing_lambda']
           
-    prob = cp.Problem(cp.Minimize(bat['J']), constr)
-    
-    solution = {key: np.array([]) for key in bat.keys()}
-    
-    indices = np.arange(Nh,dtype=np.int64)
-    indices %= idc.size # For simulations with Nh longer than idc.size
     
     bat['lambda_cal'].value = np.array([settings['lambda_cal']])
     bat['lambda_cyc'].value = np.array([settings['lambda_cyc']])
     
+    return bat, constr
+
+def solve(prob):
+   try:
+       prob.solve(solver=cp.GUROBI, verbose=False, warm_start=True, NumericFocus=3, FeasibilityTol=1e-9, OptimalityTol=1e-9)
+   except: # This is added because there was a numeric problem with Gurobi
+       prob.solve(solver=cp.SCIPY, scipy_options={"method": "highs",'options':{'tol':1e-10, 'autoscale':True}}, verbose=True)
+
+def update_solution(solution, bat, settings):
+    dt, Nh, Nc = get_horizons(settings)
+    for key in bat.keys():
+        if(bat[key].value.size==Nh+1):
+            solution[key] = np.concatenate((solution[key], bat[key].value[1:Nc+1]))
+        elif(bat[key].value.size==Nh):
+            solution[key] = np.concatenate((solution[key], bat[key].value[:Nc]))
+    
+    for key in ['lambda_cal', 'lambda_cyc']:
+        solution[key] = np.concatenate((solution[key], bat[key].value))        
+        
+def set_initial_values(bat, settings):
+    bat['Tk0'].value   = np.full(1, settings['Tk0'])
+    bat['E0'].value    = np.full(1, settings['E0']) 
+    bat['SOH0'].value  = np.full(1, settings['SOH0'])    
+
+
+def solve_optimisation(settings):
+    dt, Nh, Nc = get_horizons(settings)
+    idc = np.genfromtxt('data/' + settings['dataName'])
+    
+    bat, constr = create_problem(settings)
+    
+    prob = cp.Problem(cp.Minimize(bat['J']), constr)
+    
+    solution = {key: np.array([]) for key in bat.keys()}
     solution['settings'] = settings
+    
+    indices = np.arange(Nh,dtype=np.int64) % idc.size # For simulations with Nh longer than idc.size
+       
+    bat['c_kWh'].value = idc[indices]
+    set_initial_values(bat, settings)
+
+    while(bat['SOH0'].value >= settings['EOL']):
+        print('Now SOH is: ', bat['SOH0'].value[0])
+        
+        solve(prob)
+        update_solution(solution, bat, settings)
+                
+        # refresh initial values:
+        indices = (indices + Nc) % idc.size # Loop through 
+        bat['c_kWh'].value    = idc[indices] 
+        bat['E0'].value[0]    = max(bat['Ebatt'].value[Nc], 0)
+        bat['SOH0'].value[0] -= np.sum(bat['Qloss'].value[:Nc])
+        bat['Tk0'].value[0]   = bat['Tk'].value[Nc]
+        
+    return solution
+
+def revenue_per_Qloss(settings, print_SOH = True):
+    dt, Nh, Nc = get_horizons(settings)
+       
+    idc = np.genfromtxt('data/' + settings['dataName'])
+    
+    bat, constr = create_problem(settings)
+    
+    prob = cp.Problem(cp.Minimize(bat['J']), constr)
+    
+    solution = {key: np.array([]) for key in bat.keys()}
+    solution['settings'] = settings
+    
+    indices = np.arange(Nh,dtype=np.int64) % idc.size # For simulations with Nh longer than idc.size
     
     revenue_per_Qloss = 0 # a very small number. 
     is_increasing = True
     
-    while(SOH0 >= settings['EOL']):
-        print('Now SOH is: ', SOH0)
-        # set initial values: 
-        bat['c_kWh'].value = idc[indices] 
-        bat['E0'].value = np.array([max(E0,0)])
-        bat['SOH0'].value = np.array([SOH0])
-        bat['Tk0'].value  = np.array([Tk0])
-        
-        
-        if(lambda_policy=="constant" or lambda_policy=="revenue_per_Qloss"):
-            try:
-                prob.solve(solver=cp.GUROBI, verbose=False, warm_start=True, NumericFocus=3, FeasibilityTol=1e-9, OptimalityTol=1e-9)
-            except: # This is added because there was a numeric problem with Gurobi
-                prob.solve(solver=cp.SCIPY, scipy_options={"method": "highs",'options':{'tol':1e-10, 'autoscale':True}}, verbose=True)
-         #   print("bat['AC_Pnett'] : ", bat['AC_Pnett'].value, '\n')     
-        else:
-            pass
+    bat['c_kWh'].value = idc[indices]
+    set_initial_values(bat,settings)
 
-        for key in bat.keys():
-            if(bat[key].value.size==Nh+1):
-                solution[key] = np.concatenate((solution[key], bat[key].value[1:Nc+1]))
-            elif(bat[key].value.size==Nh):
-                solution[key] = np.concatenate((solution[key], bat[key].value[:Nc]))
-        
-        for key in ['lambda_cal', 'lambda_cyc']:
-            solution[key] = np.concatenate((solution[key], bat[key].value))
+    while(bat['SOH0'].value >= settings['EOL']):
+        print('Now SOH is: ', bat['SOH0'].value[0])
+        solve(prob)
+        update_solution(solution, bat, settings)
                 
-        if(lambda_policy == "revenue_per_Qloss"):
-            new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)/(1 + np.sum(np.abs(np.diff(bat['c_kWh'].value))))
-       #     print(f"Revenue per loss {new_revenue_per_Qloss}")
-            if(revenue_per_Qloss < new_revenue_per_Qloss):
-                if(is_increasing):
-                    bat['lambda_cal'].value *= 1.05
-                    bat['lambda_cyc'].value *= 1.05
-                else:
-                    bat['lambda_cal'].value *= 0.95
-                    bat['lambda_cyc'].value *= 0.95                    
+        new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)/(1 + np.sum(np.abs(np.diff(bat['c_kWh'].value))))
+         #    print(f"Revenue per loss {new_revenue_per_Qloss}")
+        if(revenue_per_Qloss < new_revenue_per_Qloss):
+            if(is_increasing):
+                bat['lambda_cal'].value *= 1.05
+                bat['lambda_cyc'].value *= 1.05
             else:
-                is_increasing = not is_increasing
-                if(is_increasing):
-                    bat['lambda_cal'].value *= 1.05
-                    bat['lambda_cyc'].value *= 1.05
-                else:
-                    bat['lambda_cal'].value *= 0.95
-                    bat['lambda_cyc'].value *= 0.95                 
-                
+                bat['lambda_cal'].value *= 0.95
+                bat['lambda_cyc'].value *= 0.95                    
+        else:
+            is_increasing = not is_increasing
+            if(is_increasing):
+                bat['lambda_cal'].value *= 1.05
+                bat['lambda_cyc'].value *= 1.05
+            else:
+                bat['lambda_cal'].value *= 0.95
+                bat['lambda_cyc'].value *= 0.95                 
+               
                 
             revenue_per_Qloss = new_revenue_per_Qloss
         
         # refresh initial values:
-        E0    = bat['Ebatt'].value[Nc]
-        Tk0   = bat['Tk'].value[Nc]
-        SOH0 -= np.sum(bat['Qloss'].value[:Nc])
-        indices += Nc
-        indices %= idc.size # Loop through 
-        
-    return solution
+        indices = (indices + Nc) % idc.size # Loop through 
+        bat['c_kWh'].value = idc[indices] 
+        bat['E0'].value[0] = max(bat['Ebatt'].value[Nc], 0)
+        bat['SOH0'].value[0] -= np.sum(bat['Qloss'].value[:Nc])
+        bat['Tk0'].value[0] = bat['Tk'].value[Nc]
+
+def simulate_and_save(settings, i_now, simFunction=solve_optimisation):
+    os.makedirs(settings['folderName'], exist_ok=True)
+    print(f"Starting {settings['studyName']}: {i_now}-th trial for lambda-cyc = {settings['lambda_cyc']}, lambda-cal = {settings['lambda_cal']}")
+    start_time = time.time()
+    sol = simFunction(settings)
+    sio.savemat(settings['folderName']+"/" + settings['studyName'] + "_"+ str(i_now) +"_.mat", sol)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Elapsed time: {elapsed_time} seconds")   

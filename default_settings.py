@@ -33,6 +33,7 @@ def_settings = {'AC_eta_ch': 0.95, # charge eff of power electronics
             'bat_eta_dc': 0.95, # discharge eff of battery
             'dataName': 'idc_positive_dummy.csv',
             'studyName': 'opportunity_hypothesis_2023_09_09',
+            'folderName': '.',
             'horizon': 24*7, # horizon [h]
             'control-horizon' : 24,
             'duration': 24*365*100, # 100 years

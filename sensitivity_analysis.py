@@ -1,74 +1,47 @@
-import cvxpy as cp
-import numpy as np
-import matplotlib.pyplot as plt
-import time
-import scipy.io as sio
-import os
-import itertools
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Sep 13 2023
 
-from default_settings import *
-from aux_functions import *
-import itertools
+This file tries to find optimal lambda_cal and lambda_cyc by 2D sweep
+
+@author: Volkan Kumtepeli
+"""
+import matplotlib.pyplot as plt
+
+from default_settings import def_settings
+from aux_functions import simulate_and_save
 
 settings = def_settings;
+settings['folderName'] =  'results/sensitivity_2023_09_13_real'
 
-#folder_name = 'results/sensitivity_2023_09_13_real'
 folder_name = 'results/sensitivity_2023_09_13_real'
-try:
-    os.mkdir(folder_name)
-except:
-    pass
 
 lambda_trials = [0.00001, 0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 
                  0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99, 1, 1.01, 1.02, 1.05, 1.1, 
                  1.25, 1.5, 2, 4, 8, 16, 25, 50, 10, 12, 14, 11, 13, 9, 100, 6]
 
-
 # Change only lambda_cyc
-# for i, L in enumerate(lambda_trials):
-#     if(i<39): continue
-#     print(f"Starting cyc: {i}-th trial for lambda = {L}")
-#     start_time = time.time()
-#     settings['lambda_cyc'] = L  # lambda_cal = 50 is max same for cycle. 
-#     sol = solve_optimisation(settings)
-#     sio.savemat(folder_name+"/lambda_cyc_"+str(i)+"_.mat", sol)
-#     end_time = time.time()
-#     elapsed_time = end_time - start_time
-
-#     print(f"Elapsed time: {elapsed_time} seconds")
+settings['studyName']  = "lambda_cyc"
+for i, L in enumerate(lambda_trials):
+    if(i<39): continue
+    
+    settings['lambda_cyc']  = L # lambda_cal = 50 is max same for cycle. 
+    simulate_and_save(settings, i)
 
 # # Change only lambda_cal
-# for i, L in enumerate(lambda_trials):
-#     if(i<32):
-#         continue
-#     print(f"Starting cal: {i}-th trial for lambda = {L}")
-#     start_time = time.time()
-#     settings['lambda_cal'] = L  # lambda_cal = 50 is max same for cycle. 
-#     sol = solve_optimisation(settings)
-#     sio.savemat(folder_name+"/lambda_cal_"+str(i)+"_.mat", sol)
-#     end_time = time.time()
-#     elapsed_time = end_time - start_time
-
-#     print(f"Elapsed time: {elapsed_time} seconds") 
-
+settings['studyName']  = "lambda_cal"
+for i, L in enumerate(lambda_trials):
+    if(i<32): continue
+    settings['lambda_cal'] = L # lambda_cal = 50 is max same for cycle. 
+    simulate_and_save(settings, i)
 
  
 # # Change both lambda_cal and lambda_cyc
-# for i, L in enumerate(lambda_trials):
-#     if(i<39): continue
-#     print(f"Starting both: {i}-th trial for lambda = {L}")
-#     start_time = time.time()
-#     settings['lambda_cyc'] = L  # lambda_cal = 50 is max same for cycle. 
-#     settings['lambda_cal'] = L  # lambda_cal = 50 is max same for cycle. 
-#     sol = solve_optimisation(settings)
-#     sio.savemat(folder_name+"/both_"+str(i)+"_.mat", sol)
-#     end_time = time.time()
-#     elapsed_time = end_time - start_time
-
-#     print(f"Elapsed time: {elapsed_time} seconds")   
-    
-
-
+settings['studyName']  = "both"
+for i, L in enumerate(lambda_trials):
+    if(i<39): continue
+    settings['lambda_cyc'], settings['lambda_cal'] = [L, L] # lambda_cal = 50 is max same for cycle. 
+    simulate_and_save(settings, i)  
     
 
       # Plot

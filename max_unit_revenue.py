@@ -6,44 +6,24 @@ At each step solves an outer optimisation problem to update lambda
 @author: engs2321
 """
 
-import cvxpy as cp
-import numpy as np
 import matplotlib.pyplot as plt
-import time
-import scipy.io as sio
-import os
 import itertools
 
-from default_settings import *
-from aux_functions import *
-
-folder_name = 'results/mppt_lambda_2023_09_18'
-try:
-    os.mkdir(folder_name)
-except:
-    pass
-
+from default_settings import def_settings
+from aux_functions import revenue_per_Qloss, simulate_and_save
 
 settings = def_settings;
-#settings['EOL'] = 0.9999
+settings['folderName'] =  'results/mppt_lambda_2023_09_18'
+settings['studyName']  = "mppt"
 
+#settings['EOL'] = 0.9999
 
 # i = 1
 # print("MPPT lambda optimisation is started!")
 # # ----> new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)
-# start_time = time.time()
-# sol = solve_optimisation(settings, True, "revenue_per_Qloss")
-# sio.savemat(folder_name+"/mppt_"+str(i)+"_.mat", sol)
-# end_time = time.time()
-# elapsed_time = end_time - start_time
-# print(f"Elapsed time: {elapsed_time} seconds")   
+#simulate_and_save(settings, i, revenue_per_Qloss)
 
 i = 2
 print("MPPT lambda optimisation is started!")
 # ----> new_revenue_per_Qloss = -bat['J_revenue'].value/np.sum(bat['Qloss'].value)/(1 + np.sum(np.abs(np.diff(bat['c_kWh'].value))))
-start_time = time.time()
-sol = solve_optimisation(settings, True, "revenue_per_Qloss")
-sio.savemat(folder_name+"/mppt_"+str(i)+"_.mat", sol)
-end_time = time.time()
-elapsed_time = end_time - start_time
-print(f"Elapsed time: {elapsed_time} seconds")  
+simulate_and_save(settings, i, revenue_per_Qloss)
