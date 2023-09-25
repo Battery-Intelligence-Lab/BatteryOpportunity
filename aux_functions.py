@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import time
 import scipy.io as sio
 import os
+from sklearn.linear_model import LinearRegression
 
 KELVIN = 273.15 
 
@@ -140,7 +141,6 @@ def set_initial_values(bat, settings):
     bat['E0'].value    = np.full(1, settings['E0']) 
     bat['SOH0'].value  = np.full(1, settings['SOH0'])    
 
-
 def solve_optimisation(settings):
     dt, Nh, Nc = get_horizons(settings)
     idc = np.genfromtxt('data/' + settings['dataName'])
@@ -224,6 +224,60 @@ def revenue_per_Qloss(settings, print_SOH = True):
         bat['E0'].value[0] = max(bat['Ebatt'].value[Nc], 0)
         bat['SOH0'].value[0] -= np.sum(bat['Qloss'].value[:Nc])
         bat['Tk0'].value[0] = bat['Tk'].value[Nc]
+
+
+def moving_least_squares(settings):
+    dt, Nh, Nc = get_horizons(settings)
+    idc = np.genfromtxt('data/' + settings['dataName'])
+    window = settings['window_length_d']
+    
+    bat, constr = create_problem(settings)
+    
+    prob = cp.Problem(cp.Minimize(bat['J']), constr)
+    
+    solution = {key: np.array([]) for key in bat.keys()}
+    solution['settings'] = settings
+    
+    indices = np.arange(Nh,dtype=np.int64) % idc.size # For simulations with Nh longer than idc.size
+       
+    bat['c_kWh'].value = idc[indices]
+    set_initial_values(bat, settings)
+    
+    Qtot = np.array([])
+    reve = np.array([])
+    
+    cost_whole = settings['Enom'] * settings['price_kWhcap'] / (1.0 - settings['EOL'])
+    
+    while(bat['SOH0'].value >= settings['EOL']):
+        print('Now SOH is: ', bat['SOH0'].value[0])
+        
+        solve(prob)
+        update_solution(solution, bat, settings)
+        
+        if(Qtot.size == window):
+            Qtot = np.delete(Qtot, 0)
+            reve = np.delete(reve, 0)
+
+        Qtot = np.append(Qtot, np.sum(bat['Qloss'].value))
+        reve = np.append(reve, np.sum(bat['revenue'].value))        
+                    
+        lr = LinearRegression(positive=True, fit_intercept=(Qtot.size!=1))
+        reg = lr.fit(cost_whole*Qtot.reshape(-1, 1), reve.reshape(-1, 1))
+        
+        print(f"Linear regression slope: {reg.coef_}, intercept: {reg.intercept_}")
+        new_lambda = max(reg.coef_[0], 0.01)
+        
+        bat['lambda_cyc'].value[0] = new_lambda
+        bat['lambda_cal'].value[0] = new_lambda
+                
+        # refresh initial values:
+        indices = (indices + Nc) % idc.size # Loop through 
+        bat['c_kWh'].value    = idc[indices] 
+        bat['E0'].value[0]    = max(bat['Ebatt'].value[Nc], 0)
+        bat['SOH0'].value[0] -= np.sum(bat['Qloss'].value[:Nc])
+        bat['Tk0'].value[0]   = bat['Tk'].value[Nc]
+        
+    return solution
 
 def simulate_and_save(settings, i_now, simFunction=solve_optimisation):
     os.makedirs(settings['folderName'], exist_ok=True)
