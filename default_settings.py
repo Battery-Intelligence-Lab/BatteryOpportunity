@@ -5,6 +5,12 @@ Created on Sun Sep 17 04:32:24 2023
 @author: Volkan Kumtepeli
 """
 import numpy as np
+import os
+
+
+from pathlib import Path
+os.chdir(Path(__file__).resolve().parent) # Sometimes cwd is not file directory. 
+
 
 KELVIN = 273.15 
 
