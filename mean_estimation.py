@@ -23,7 +23,7 @@ settings = def_settings;
 settings['folderName'] =  'results/mean_window_2023_09_26'
 
 
-window_length_d = [7, 15, 30, 60, 90] # from 7 day, 15 days, 30, 60, 90
+window_length_d = [7, 15, 30, 60, 90, 180, 365] # from 7 day, 15 days, 30, 60, 90
 
 
 settings['studyName']  = "mean_window"
@@ -37,6 +37,7 @@ for i, window in enumerate(window_length_d):
 settings['studyName']  = "geo_mean_window"
 settings['meanFunction'] = geo_mean_overflow
 for i, window in enumerate(window_length_d):
+  #  if(i<5): continue
     settings['lambda_cyc'], settings['lambda_cal'] = [0.01, 0.01]
     settings['window_length_d'] = window
     simulate_and_save(settings, i, simFunction=moving_average_filter)
