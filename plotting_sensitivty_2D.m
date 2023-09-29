@@ -51,6 +51,7 @@ zlabel('Revenue at EOL (EUR/kWh_{cap})')
 %%
 close all;
 Enom  = 192;
+c_invest = Enom*250;
 
 
 width  = 3.5; % 3.5 inch / 9 cm 
@@ -58,13 +59,17 @@ height = width/golden_ratio;
 fig1=figure('Units','inches',...
 'Position',[x0 y0 (x0+width) (y0+height)],...
 'PaperPositionMode','auto');
-imagesc(all_mix.lambda_cal(:,1)', all_mix.lambda_cyc(1,:), all_mix.revenue_at_EOL/Enom); colormap("jet");
+imagesc(all_mix.lambda_cal(:,1)', all_mix.lambda_cyc(1,:), all_mix.revenue_at_EOL/Enom); 
+%pcolor(all_mix.revenue_at_EOL/Enom)
+%[X, Y] = meshgrid()
+%shading interp;
+colormap("jet");
 xlabel('\lambda-{calendar}');
 ylabel('\lambda-{cycle}');
 c = colorbar;
 c.Label.String = ('Revenue at EOL (EUR/kWh_{cap})');
 c.Label.FontSize = text_font;
-clim([1100,1700])
+%clim([1100,1700])
 
 
 set(gca,...
@@ -75,3 +80,13 @@ set(gca,...
 'FontName','Times');
 set(gca,'LooseInset',max(get(gca,'TightInset'), 0.1))
 set(gcf,'renderer','Painters')
+
+plt_name = "sweep_2D";
+
+print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
+print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
+savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
+
+%%
+
+%surf(all_mix.revenue_at_EOL/Enom)

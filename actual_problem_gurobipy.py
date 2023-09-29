@@ -179,8 +179,8 @@ bat['battery_alive']   = m.addMVar(Nd, vtype=GRB.BINARY, name="Pch") #Only for e
 # once dead always dead. 
 m.addConstr(bat['battery_alive'][1:] <= bat['battery_alive'][:-1])
 
-for i in range(Nd):
-    m.addConstr( <= bat['battery_alive'][i]*(Cr_ch*Enom)) ->>>> Need to have a look at diminishing boundaries. 
+#for i in range(Nd):
+#    m.addConstr( <= bat['battery_alive'][i]*(Cr_ch*Enom)) ->>>> Need to have a look at diminishing boundaries. 
 
 bat['Pch']    = m.addMVar(Nh, lb=0, ub=(Cr_ch*Enom), name="Pch")
 bat['Pdisch'] = m.addMVar(Nh, lb=0, ub=(Cr_dc*Enom), name="Pdisch")

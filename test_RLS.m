@@ -28,7 +28,7 @@ plot_folder = "plots";
 avg_horizon = 24*7; % 1 week of horizon
 cost_whole = 192*250/0.2;
 
-i_now = find(all_both.lambda_cyc == 1);
+i_now = find(all_both.lambda_cyc == 6);
 
 caseNow = now_both(i_now);
 
@@ -65,6 +65,48 @@ lambda_per_Q = revenue_per_Q/cost_whole;
 T = table(Qcal_avg', Qcyc_avg', revenue_sum', 'VariableNames', ["Qcal","Qcyc","Revenue"]);
 
 writetable(T, "estimation_example.csv");
+
+
+%% Plot spread! 
+
+Enom = 192; % 192 kWhcap
+width  = 3.5; % 3.5 inch / 9 cm 
+height = width/golden_ratio;
+fig1=figure('Units','inches',...
+'Position',[x0 y0 (x0+width) (y0+height)],...
+'PaperPositionMode','auto');
+
+
+plfit = polyfit(Qtot_avg,  revenue_sum,1);
+line_val = polyval(plfit, Qtot_avg);
+
+scatter(Qtot_avg*100, revenue_sum,'.'); hold on;
+plot(Qtot_avg*100,line_val,'LineWidth',1.3);
+ylabel('Revenue (EUR)');
+xlim([0.004, 0.0141])
+
+grid on; xlabel('Qloss (%)'); 
+
+leg = legend('Qloss', 'LS-fitting', 'Location','northwest');
+
+leg.FontSize = text_font;
+
+ax = gca;
+set(gca,...
+'Units','normalized',...
+'FontUnits','points',...
+'FontWeight','normal',...
+'FontSize',text_font,...
+'FontName','Times');
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+set(gcf,'renderer','Painters')
+
+%%
+plt_name = "profit_vs_ageing_LS";
+
+print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
+print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
+savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
 
 
 %% Gradient descent: 
