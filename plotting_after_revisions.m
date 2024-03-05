@@ -465,14 +465,14 @@ marg_w = [.01 .01];
 
 [ha, pos] = tight_subplot(2, 1, gap, marg_h, marg_w);
 
-iall = [15, 27, 29]
+iall = [1, 27, 28, 29, 30, 31,33]; %1:5:33 % 1:33%[15, 27, 29]
  
 colors= flipud(viridis(length(iall)));
 
 for i=1:2
     hold(ha(i),'on');
     ha(i).XTickMode
-
+    ha(i).XScale = 'log';
 end
 t_sel = 100;
 i0 = 1;
@@ -480,7 +480,7 @@ for i1 = iall
 plot(ha(1), now_both(i1).time_y(1:t_sel:end), now_both(i1).SOH(1:t_sel:end)*100,lw{:},'color',colors(i0,:));
 i0 = i0+1;
 end
-%xlim([0,50]);
+xlim([2,50]);
 %ylim([75,100]);
 
 i0 = 1;
@@ -489,6 +489,19 @@ plot(ha(2), now_both(i1).profit_years, now_both(i1).yearly_profit,lw{:},'color',
 i0 = i0+1;
 end
 %xlim([0,50]);
+linkaxes([ha],'x');
+sel = 1:33
+sel(2) = [];
+
+profit_years_end = arrayfun(@(x) x.profit_years(end), now_both);
+yearly_profit_end = arrayfun(@(x) x.yearly_profit(end), now_both);
+
+profit_years_end_interp = profit_years_end(1):0.1:100;
+yearly_profit_end_interp = interp1(profit_years_end(sel), yearly_profit_end(sel), profit_years_end_interp,'spline');
+
+plot(ha(2), profit_years_end_interp, yearly_profit_end_interp, '--')
+
+
 
 
 % 
