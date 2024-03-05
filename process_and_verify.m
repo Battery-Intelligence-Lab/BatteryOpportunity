@@ -4,6 +4,8 @@ allCases = [];
 
 CC =  0.05; % Yearly interest. 
 
+CC_list = 0:0.01:0.25;
+
 
 for i=1:length(caseNow)
     EOL = caseNow(i).settings.EOL;
@@ -37,6 +39,9 @@ for i=1:length(caseNow)
 
     profit_sum = 0;
     lambda_sum = 0;
+
+    caseNow(i).yearly_profit = zeros(1,caseNow(i).N_year+1);
+    caseNow(i).profit_years  = zeros(1,caseNow(i).N_year+1);
     
     for i_NPV = 1:caseNow(i).N_year
         i_before = caseNow(i).NPV_indices(i_NPV);
@@ -44,8 +49,10 @@ for i=1:length(caseNow)
         profit_i = diff(caseNow(i).cumulative_revenue([i_before, i_after]));
         
         profit_sum = profit_sum + profit_i/(1 + CC)^i_NPV;
-        
+        caseNow(i).yearly_profit(i_NPV+1) = profit_sum;
+        caseNow(i).profit_years(i_NPV) = i_NPV-1;
     end
+    caseNow(i).profit_years(end) = caseNow(i).time_y(end);
 
     caseNow(i).NPV = profit_sum;
     caseNow(i).PI  = caseNow(i).NPV / c_investment;
@@ -54,6 +61,31 @@ for i=1:length(caseNow)
     allCases.NPV(i)                = caseNow(i).NPV;
     allCases.PI(i)                 = caseNow(i).PI;
 
+    % List of interests, just for after revision work, not to modify above
+    % I am creating a new for loop. 
+    allCases.CC_list = CC_list;
+    caseNow(i).CC_list = CC_list;
+
+    for i_CC = 1:length(CC_list)
+        CC_now = CC_list(i_CC);
+        profit_sum = 0;
+        
+        for i_NPV = 1:caseNow(i).N_year
+            i_before = caseNow(i).NPV_indices(i_NPV);
+            i_after  = caseNow(i).NPV_indices(i_NPV+1);
+            profit_i = diff(caseNow(i).cumulative_revenue([i_before, i_after]));
+            
+            profit_sum = profit_sum + profit_i/(1 + CC_now)^i_NPV;
+            
+        end
+    
+        caseNow(i).NPV_list(i_CC) = profit_sum;
+        caseNow(i).PI_list(i_CC)  = profit_sum / c_investment;
+    
+    end
+
+    allCases.NPV_list(i,:)                = caseNow(i).NPV_list;
+    allCases.PI_list(i,:)                 = caseNow(i).PI_list;   
     
     
     % Verify cases:
