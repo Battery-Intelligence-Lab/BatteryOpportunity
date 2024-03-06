@@ -43,6 +43,7 @@ shading interp
 
 
 %% Revenue by lambda cyc/cal: 
+close all;
 Enom = 192; % 192 kWhcap
 width  = 3.5; % 3.5 inch / 9 cm 
 height = width/golden_ratio;
@@ -52,16 +53,47 @@ fig1=figure('Units','inches',...
 
 semilogx(all_cal.lambda_cal, all_cal.revenue_at_EOL/Enom,'o-', lw{:}); hold on;
 semilogx(all_cyc.lambda_cyc, all_cyc.revenue_at_EOL/Enom,'d-', lw{:});
-semilogx(all_both.lambda_cal, all_both.revenue_at_EOL/Enom,'s-', lw{:});
+semilogx(all_both.lambda_cal, all_both.revenue_at_EOL/Enom,'s-', lw{:}); % cost_whole/0.2
 
-grid on; xlabel('\lambda (-)'); 
-ylabel('Revenue per capacity (EUR/kWh_{cap})');
+%grid on; 
+xlabel('\lambda (-)'); 
+ylabel('NPV per capacity (EUR/kWh_{cap})');
 
-xline(1)
+%xline(1)
 xlim([0.001/1.5, 130]);
 ylim([150,1600])
 
-leg = legend('Case 1: only \lambda_{cal}', 'Case 2: only \lambda_{cyc}', 'Case 3: both \lambda_{cal}, \lambda_{cyc}',...
+axfirst=gca;
+
+set(gca,...
+'Units','normalized',...
+'FontUnits','points',...
+'FontWeight','normal',...
+'FontSize',text_font,...
+'FontName','Times');
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+set(gcf,'renderer','Painters')
+yyaxis right;
+axy = gca;
+axy.YColor = 'k';
+ylim([0,7])
+
+scaled_values_cal = all_cal.revenue_at_EOL/cost_whole/0.2;
+scaled_values_cyc = all_cyc.revenue_at_EOL/cost_whole/0.2;
+scaled_values_both = all_both.revenue_at_EOL/cost_whole/0.2;
+ylabel('Profitability index (-)')
+
+
+% Plotting the scaled data on the right y-axis
+semilogx(all_cal.lambda_cal, scaled_values_cal, 'o-', 'Color', 'none', 'HandleVisibility', 'off'); hold on;
+semilogx(all_cyc.lambda_cyc, scaled_values_cyc, 'd-',  'Color', 'none', 'HandleVisibility', 'off');
+semilogx(all_both.lambda_cal, scaled_values_both, 's-', 'Color', 'none', 'HandleVisibility', 'off');
+
+
+
+xline(6,'-','\lambda = 6','LabelVerticalAlignment','bottom','FontName','Times','FontSize',text_font*1.2,'LabelHorizontalAlignment','left')
+
+leg = legend('only \lambda_{cal}', 'only \lambda_{cyc}', 'both \lambda_{cal}, \lambda_{cyc}',...
        'Location','northwest');
 
 leg.FontSize = text_font;
@@ -70,7 +102,8 @@ leg.FontSize = text_font;
 % set(gca,'XTickLabel',New_XTickLabel);
 
 ax = gca;
-ax.XTick = [0.001, ax.XTick];
+ax.XTick =  [0.001, 0.01, 0.1, 1, 9.99999999999, 100];
+
 set(gca,...
 'Units','normalized',...
 'FontUnits','points',...
@@ -88,10 +121,10 @@ print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
 savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
 
 
-%% PI by lambda cyc/cal: 
+% PI by lambda cyc/cal: 
 Enom = 192; % 192 kWhcap
-width  = 3.5; % 3.5 inch / 9 cm 
-height = width/golden_ratio;
+width  = 3.23; % 3.5 inch / 9 cm 
+height = 3.5/golden_ratio;
 fig1=figure('Units','inches',...
 'Position',[x0 y0 (x0+width) (y0+height)],...
 'PaperPositionMode','auto');
@@ -100,26 +133,43 @@ semilogx(all_cal.lambda_cal, all_cal.PI,'o-', lw{:}); hold on;
 semilogx(all_cyc.lambda_cyc, all_cyc.PI,'d-', lw{:});
 semilogx(all_both.lambda_cal, all_both.PI,'s-', lw{:});
 
-grid on; xlabel('\lambda (-)'); 
-ylabel('Profitability index (-)');
+%grid on; 
+xlabel('\lambda (-)'); 
+%ylabel('Profitability index (-)');
+ylim([0,7])
 
-xline(3)
+set(gca,...
+'Units','normalized',...
+'FontUnits','points',...
+'FontWeight','normal',...
+'FontSize',text_font,...
+'FontName','Times');
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+set(gcf,'renderer','Painters')
+yyaxis right;
+axy = gca;
+axy.YColor = 'k';
+
+scaled_values_cal = all_cal.NPV/Enom;
+scaled_values_cyc = all_cyc.NPV/Enom;
+scaled_values_both = all_both.NPV/Enom;
+ylabel('NPV per capacity (EUR/kWh_{cap})')
+semilogx(all_cal.lambda_cal, scaled_values_cal, 'o-', 'Color', 'none', 'HandleVisibility', 'off'); hold on;
+semilogx(all_cyc.lambda_cyc, scaled_values_cyc, 'd-',  'Color', 'none', 'HandleVisibility', 'off');
+semilogx(all_both.lambda_cal, scaled_values_both, 's-', 'Color', 'none', 'HandleVisibility', 'off');
+ylim([150,1600])
+xline(3,'-','\lambda = 3','LabelVerticalAlignment','bottom','FontName','Times','FontSize',text_font*1.2,'LabelHorizontalAlignment','left')
 
 
-leg = legend('Case 1: only \lambda_{cal}', 'Case 2: only \lambda_{cyc}', 'Case 3: both \lambda_{cal}, \lambda_{cyc}',...
-       'Location','southwest');
+leg = legend('only \lambda_{cal}', 'only \lambda_{cyc}', 'both \lambda_{cal}, \lambda_{cyc}',...
+       'Location','northwest');
 
 leg.FontSize = text_font;
 
-% New_XTickLabel = get(gca,'xtick');
-% set(gca,'XTickLabel',New_XTickLabel);
-
 ax = gca;
-ax.XTick = [0.001, 0.01, 0.1, 1, 3, 10, 100];
-%ax.XTick = [0.01, 0.1, 0.3, 1, 2.5, 6, 10, 25, 50];
+ax.XTick = [0.001, 0.01, 0.1, 1, 9.999999999, 100];
 
 xlim([0.001/1.5, 130]);
-ylim([0,3.2])
 
 set(gca,...
 'Units','normalized',...
@@ -458,21 +508,29 @@ height = 2*width/golden_ratio;
 fig1=figure('Units','inches',...
 'Position',[x0 y0 (x0+width) (y0+height)],...
 'PaperPositionMode','auto');
-gap    = [.01 .03];
-marg_h = [.1  .01];
-marg_w = [.01 .01];
+gap    = [.05 .03];
+marg_h = [.06  .01];
+marg_w = [.13 .01];
 
 
 [ha, pos] = tight_subplot(2, 1, gap, marg_h, marg_w);
 
-iall = [1, 27, 28, 29, 30, 31,33]; %1:5:33 % 1:33%[15, 27, 29]
+iall = [1, 28, 30]; %1:5:33 % 1:33%[15, 27, 29]
  
-colors= flipud(viridis(length(iall)));
+colors= flipud(hsv(length(iall)));
 
 for i=1:2
     hold(ha(i),'on');
     ha(i).XTickMode
-    ha(i).XScale = 'log';
+  set(ha(i),...
+'Units','normalized',...
+'FontUnits','points',...
+'FontWeight','normal',...
+'FontSize',text_font,...
+'FontName','Times');
+
+  grid(ha(i),'on')
+
 end
 t_sel = 100;
 i0 = 1;
@@ -482,6 +540,8 @@ i0 = i0+1;
 end
 xlim([2,50]);
 %ylim([75,100]);
+yline(ha(1),80,'k-.',lw{:},'label','End of life','LabelVerticalAlignment','bottom','FontName','Times','FontSize',text_font*1.2,'LabelHorizontalAlignment','right');
+
 
 i0 = 1;
 for i1 = iall
@@ -490,7 +550,7 @@ i0 = i0+1;
 end
 %xlim([0,50]);
 linkaxes([ha],'x');
-sel = 1:33
+sel = 1:33;
 sel(2) = [];
 
 profit_years_end = arrayfun(@(x) x.profit_years(end), now_both);
@@ -501,46 +561,19 @@ yearly_profit_end_interp = interp1(profit_years_end(sel), yearly_profit_end(sel)
 
 plot(ha(2), profit_years_end_interp, yearly_profit_end_interp, '--')
 
+ha(1).YLabel.String = 'SOH (%)';
+ha(1).YTick =  80:5:100;
+ha(1).YTickLabel = ha(1).YTick;
+ha(1).YLim = [75,100];
 
+ha(2).YLabel.String = 'Profit (EUR)';
 
+set(gcf,'renderer','Painters');
 
-% 
-% a3 = semilogx(all_both.lambda_cal, all_both.FEC_at_EOL,'s-', lw{:});
-% ylabel('Full equivalent cycles (-)');
-% ylim([0,3.1]*1e4);
-% yyaxis right;
-% 
-% %semilogx(all_cal.lambda_cal, all_cal.lifetime_y,'o-', lw{:}); hold on;
-% %semilogx(all_cyc.lambda_cyc, all_cyc.lifetime_y,'d-', lw{:});
-% semilogx(all_both.lambda_cal, all_both.lifetime_y,'d-', lw{:});
-% 
-% ylabel('Lifetime (years)');
-% grid on; xlabel('\lambda-both (-)'); 
-% ylim([-1,101]);
-% 
-% xline(1)
-% xlim([0.001/1.5, 130]);
-% %ylim([150,1600])
-% 
-% leg = legend('FEC', 'Lifetime', 'Location','northwest');
-% 
-% leg.FontSize = text_font;
-% 
-% % New_XTickLabel = get(gca,'xtick');
-% % set(gca,'XTickLabel',New_XTickLabel);
-
-%ax.XTick = [0.001, ax.XTick];
-% set(gca,...
-% 'Units','normalized',...
-% 'FontUnits','points',...
-% 'FontWeight','normal',...
-% 'FontSize',text_font,...
-% 'FontName','Times');
-% set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-set(gcf,'renderer','Painters')
-
+xlabel('Time (years)');
 
 plt_name = "summary";
+
 
 print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
 print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
