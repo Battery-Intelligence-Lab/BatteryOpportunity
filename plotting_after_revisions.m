@@ -45,6 +45,9 @@ shading interp
 %% Revenue by lambda cyc/cal: 
 close all;
 Enom = 192; % 192 kWhcap
+EOL = 0.8;
+price_per_cap = 250; 
+cost_whole = Enom*price_per_cap/(1-EOL);
 width  = 3.5; % 3.5 inch / 9 cm 
 height = width/golden_ratio;
 fig1=figure('Units','inches',...
@@ -61,7 +64,8 @@ ylabel('NPV per capacity (EUR/kWh_{cap})');
 
 %xline(1)
 xlim([0.001/1.5, 130]);
-ylim([150,1600])
+ylim_per = [150, 1600];
+ylim(ylim_per)
 
 axfirst=gca;
 
@@ -76,7 +80,7 @@ set(gcf,'renderer','Painters')
 yyaxis right;
 axy = gca;
 axy.YColor = 'k';
-ylim([0,7])
+ylim(ylim_per/price_per_cap)
 
 scaled_values_cal = all_cal.revenue_at_EOL/cost_whole/0.2;
 scaled_values_cyc = all_cyc.revenue_at_EOL/cost_whole/0.2;
@@ -136,7 +140,7 @@ semilogx(all_both.lambda_cal, all_both.PI,'s-', lw{:});
 %grid on; 
 xlabel('\lambda (-)'); 
 %ylabel('Profitability index (-)');
-ylim([0,7])
+ylim(ylim_per/price_per_cap)
 
 set(gca,...
 'Units','normalized',...
@@ -508,16 +512,20 @@ height = 2*width/golden_ratio;
 fig1=figure('Units','inches',...
 'Position',[x0 y0 (x0+width) (y0+height)],...
 'PaperPositionMode','auto');
-gap    = [.05 .03];
+gap    = [.01 .03];
 marg_h = [.06  .01];
-marg_w = [.13 .01];
+marg_w = [.06 .01];
 
+
+red = [0.635, 0.078, 0.184];
+yellow =[0.929, 0.694, 0.125];
+green = [0.133, 0.545, 0.133];
 
 [ha, pos] = tight_subplot(2, 1, gap, marg_h, marg_w);
 
 iall = [1, 28, 30]; %1:5:33 % 1:33%[15, 27, 29]
  
-colors= flipud(hsv(length(iall)));
+colors= [red; yellow; green]; %flipud(hsv(length(iall)));
 
 for i=1:2
     hold(ha(i),'on');
@@ -540,8 +548,47 @@ i0 = i0+1;
 end
 xlim([2,50]);
 %ylim([75,100]);
-yline(ha(1),80,'k-.',lw{:},'label','End of life','LabelVerticalAlignment','bottom','FontName','Times','FontSize',text_font*1.2,'LabelHorizontalAlignment','right');
+yline(ha(1),80,'k-.','Linewidth',2,'label','End of life (80% SOH)','LabelVerticalAlignment','bottom','FontName','Times','FontSize',text_font*1.2,'LabelHorizontalAlignment','right');
 
+%set(gcf, 'CurrentAxes', ha(1))
+annot_set = {'HorizontalAlignment','center','VerticalAlignment', 'bottom','FontName','Times','FontSize',12, 'Margin',1.2};
+
+now_data = now_both(1);
+i_mid = round(length(now_data.time_y)/2);
+x_mid = now_data.time_y(i_mid);
+y_mid = now_data.SOH(i_mid)*100;
+% 
+% dx_mid = diff(now_data.time_y([i_mid-10000, i_mid+10000]))/diff(xlim);
+% dy_mid = diff(now_data.SOH([i_mid-10000, i_mid+10000]))/diff(ylim);
+% 
+% theta_mid = rad2deg(atan2(dy_mid,dx_mid));
+
+text(ha(1), x_mid+1.5, y_mid-3, "heavy usage",'Rotation',-79, annot_set{:});
+
+now_data = now_both(28);
+i_mid = round(length(now_data.time_y)/2);
+x_mid = now_data.time_y(i_mid);
+y_mid = now_data.SOH(i_mid)*100;
+% 
+% dx_mid = diff(now_data.time_y([i_mid-10000, i_mid+10000]))/diff(xlim);
+% dy_mid = diff(now_data.SOH([i_mid-10000, i_mid+10000]))/diff(ylim);
+% 
+% theta_mid = rad2deg(atan2(dy_mid,dx_mid));
+
+text(ha(1), x_mid+5.5, y_mid-3, "moderate usage",'Rotation',-44, annot_set{:});
+
+
+now_data = now_both(30);
+i_mid = round(length(now_data.time_y)/2);
+x_mid = now_data.time_y(i_mid);
+y_mid = now_data.SOH(i_mid)*100;
+% 
+% dx_mid = diff(now_data.time_y([i_mid-10000, i_mid+10000]))/diff(xlim);
+% dy_mid = diff(now_data.SOH([i_mid-10000, i_mid+10000]))/diff(ylim);
+% 
+% theta_mid = rad2deg(atan2(dy_mid,dx_mid));
+
+text(ha(1), x_mid+1, y_mid, "light usage",'Rotation',-25, annot_set{:});
 
 i0 = 1;
 for i1 = iall
@@ -559,18 +606,31 @@ yearly_profit_end = arrayfun(@(x) x.yearly_profit(end), now_both);
 profit_years_end_interp = profit_years_end(1):0.1:100;
 yearly_profit_end_interp = interp1(profit_years_end(sel), yearly_profit_end(sel), profit_years_end_interp,'spline');
 
-plot(ha(2), profit_years_end_interp, yearly_profit_end_interp, '--')
+[max_y, max_i] = max(yearly_profit_end_interp);
 
-ha(1).YLabel.String = 'SOH (%)';
-ha(1).YTick =  80:5:100;
-ha(1).YTickLabel = ha(1).YTick;
+plot(ha(2), profit_years_end_interp, yearly_profit_end_interp, '--'); hold on;
+plot(profit_years_end_interp(max_i), max_y, 'pentagram','MarkerSize',10,'MarkerFaceColor','b','MarkerEdgeColor','b')
+
+ha(1).YLabel.String = 'State of health';
+% ha(1).YTick =  80:5:100;
+% ha(1).YTickLabel = ha(1).YTick;
 ha(1).YLim = [75,100];
 
-ha(2).YLabel.String = 'Profit (EUR)';
+ha(2).YLabel.String = 'Financial returns';
+
+ha(2).YLim = 1.2*ha(2).YLim;
+ha(2).XLim = -0.025*diff(ha(2).XLim) + 1.025*ha(2).XLim;
 
 set(gcf,'renderer','Painters');
 
-xlabel('Time (years)');
+xlabel('Time');
+
+text(ha(2), 46, 117344, "End-of-life returns per usage",'Rotation',-21, annot_set{:});
+annotation('textarrow',[0.70 0.44],[0.48 0.45],'String','Maximum revenue\newlinefor the best usage','FontName','Times','FontSize',text_font);
+text(ha(2), 33, 82294, "long life, low rate",'Rotation',11, annot_set{:});
+text(ha(2), 4, 65000, "short life, high rate",'Rotation',70, annot_set{:});
+text(ha(2), 16, 101000, "balanced life and rate",'Rotation',40, annot_set{:});
+
 
 plt_name = "summary";
 
@@ -578,6 +638,8 @@ plt_name = "summary";
 print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
 print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
 savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
+fig1.PaperSize = fig1.PaperPosition(3:4);
+saveas(fig1,fullfile(plot_folder, plt_name + ".pdf"));
 
 
 %% Revenue/ageing/cost_whole:
