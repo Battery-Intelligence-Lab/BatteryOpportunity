@@ -1,4 +1,4 @@
-function [caseNow, allCases] = process_and_verify(caseNow)
+function out = process_and_verify(caseNow)
 
 allCases = [];
 
@@ -6,10 +6,11 @@ CC =  0.05; % Yearly interest.
 
 CC_list = 0:0.01:0.25;
 
-
 for i=1:length(caseNow)
     EOL = caseNow(i).settings.EOL;
     dth = caseNow(i).settings.dt;
+    dtd = 24/dth;
+    dty = 365*dtd;
     c_investment = double(caseNow(i).settings.price_kWhcap)*double(caseNow(i).settings.Enom);
     cost_whole = c_investment/(1-EOL);
 
@@ -18,12 +19,11 @@ for i=1:length(caseNow)
     caseNow(i).time_d = caseNow(i).time_h/24;
     caseNow(i).time_y = caseNow(i).time_d/365;
     caseNow(i).N_year = ceil(caseNow(i).time_y(end)); % total years to consider for NPV 
+    caseNow(i).N_day  = ceil(caseNow(i).time_d(end)); % total days to consider for NPV 
     
-    [~, year_indices] = min(abs(caseNow(i).time_y' - (1:floor(caseNow(i).time_y(end)))));
+    caseNow(i).NPV_indices = [1:dty:length(caseNow(i).time_y), length(caseNow(i).time_y)];  % for years 0, 1, 2, ... value of last day.
+    caseNow(i).NPV_indices_daily = [1:dtd:length(caseNow(i).time_d), length(caseNow(i).time_d)];  % for years 0, 1, 2, ... value of last day.
 
-
-    caseNow(i).NPV_indices = [1, year_indices, length(caseNow(i).time_y)]; % for years 0, 1, 2, ... value of last day.
-    
     caseNow(i).cumulative_revenue = [0, cumsum(caseNow(i).revenue)];
     
 
@@ -86,6 +86,31 @@ for i=1:length(caseNow)
 
     allCases.NPV_list(i,:)                = caseNow(i).NPV_list;
     allCases.PI_list(i,:)                 = caseNow(i).PI_list;   
+
+
+    % This is for daily interest thing. 
+    allCases.CC_list_daily = CC_list/365;
+    caseNow(i).CC_list_daily = CC_list/365;
+
+    for i_CC = 1:length(allCases.CC_list_daily)
+        CC_now = allCases.CC_list_daily(i_CC);
+        profit_sum = 0;
+
+        for i_NPV = 1:caseNow(i).N_day
+            i_before = caseNow(i).NPV_indices_daily(i_NPV);
+            i_after  = caseNow(i).NPV_indices_daily(i_NPV+1);
+            profit_i = diff(caseNow(i).cumulative_revenue([i_before, i_after]));
+
+            profit_sum = profit_sum + profit_i/(1 + CC_now)^i_NPV;
+        end
+
+        caseNow(i).NPV_list_daily(i_CC) = profit_sum;
+        caseNow(i).PI_list_daily(i_CC)  = profit_sum / c_investment;
+
+    end
+
+    allCases.NPV_list_daily(i,:) = caseNow(i).NPV_list_daily;
+    allCases.PI_list_daily(i,:)  = caseNow(i).PI_list_daily;   
     
     
     % Verify cases:
@@ -102,5 +127,7 @@ for i=1:length(caseNow)
     fprintf('Norm of error of %d-th case Qloss_cal    is %4.10f\n',i, norm(true_Qloss_cal - caseNow(i).Qloss_cal_per_h,1))
 end
 
+out.now = caseNow;
+out.all = allCases;
 
 end
