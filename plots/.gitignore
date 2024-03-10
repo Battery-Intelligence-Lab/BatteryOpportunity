@@ -1,2 +1,8 @@
-*
+*.eps
+*.png
+*.fig
+*.pdf
+
+# Except directories
 !.gitignore
+!before_revision/*
