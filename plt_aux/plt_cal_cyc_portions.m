@@ -1,7 +1,7 @@
 function plt_cal_cyc_portions(cal, cyc, both)
 plt_common;
 width_  = 7/3; % 3.5 inch / 9 cm 
-height_ = 1.2*width_/golden_ratio;
+height_ = 1.05*width_/golden_ratio;
 fig1=figure('Units','inches',...
 'Position',[x0 y0 (x0+width_) (y0+height_)],...
 'PaperPositionMode','auto');
@@ -33,6 +33,8 @@ set(gca,...
 set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
 set(gcf,'renderer','Painters')
 
+leg.Position(1) = 0.16;
+leg.Position(2) = 0.79;
 
 plt_name = "ageing_vs_lambda_cal";
 
@@ -78,6 +80,9 @@ set(gca,...
 'FontName','Times');
 set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
 set(gcf,'renderer','Painters')
+
+leg.Position(1) = 0.16;
+leg.Position(2) = 0.79;
 
 
 plt_name = "ageing_vs_lambda_cyc";
@@ -128,6 +133,8 @@ set(gca,...
 set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
 set(gcf,'renderer','Painters')
 
+leg.Position(1) = 0.16;
+leg.Position(2) = 0.79;
 
 plt_name = "ageing_vs_lambda_both";
 
