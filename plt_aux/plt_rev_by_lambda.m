@@ -4,8 +4,7 @@ Enom = 192; % 192 kWhcap
 EOL = 0.8;
 price_per_cap = 250; 
 cost_whole = Enom*price_per_cap/(1-EOL);
-width_  = 3.5; % 3.5 inch / 9 cm 
-height_ = width_/golden_ratio;
+height_ = width_/golden_ratio/1.15;
 fig1=figure('Units','inches',...
 'Position',[x0 y0 (x0+width_) (y0+height_)],...
 'PaperPositionMode','auto');
@@ -83,7 +82,7 @@ savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
 % PI by lambda cyc/cal: 
 Enom = 192; % 192 kWhcap
 width_  = 3.23; % 3.5 inch / 9 cm 
-height_ = 3.5/golden_ratio;
+height_ = 3.5/golden_ratio/1.15;
 fig1=figure('Units','inches',...
 'Position',[x0 y0 (x0+width_) (y0+height_)],...
 'PaperPositionMode','auto');

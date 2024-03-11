@@ -4,7 +4,7 @@ allCases = [];
 
 CC =  0.05; % Yearly interest. 
 
-CC_list = 0:0.01:0.25;
+CC_list = 0:0.01:0.30;
 
 for i=1:length(caseNow)
     EOL = caseNow(i).settings.EOL;
@@ -38,11 +38,11 @@ for i=1:length(caseNow)
     allCases.lambda_approx(i)      = allCases.revenue_at_EOL(i)/cost_whole/(1-EOL);
 
     profit_sum = 0;
-    lambda_sum = 0;
 
     caseNow(i).yearly_profit = zeros(1,caseNow(i).N_year+1);
-    caseNow(i).profit_years  = zeros(1,caseNow(i).N_year+1);
-    
+    caseNow(i).profit_years      = 1:caseNow(i).N_year+1;
+    caseNow(i).profit_years(end) = caseNow(i).time_y(end);
+
     for i_NPV = 1:caseNow(i).N_year
         i_before = caseNow(i).NPV_indices(i_NPV);
         i_after  = caseNow(i).NPV_indices(i_NPV+1);
@@ -52,45 +52,34 @@ for i=1:length(caseNow)
         caseNow(i).yearly_profit(i_NPV+1) = profit_sum;
         caseNow(i).profit_years(i_NPV) = i_NPV-1;
     end
-    caseNow(i).profit_years(end) = caseNow(i).time_y(end);
 
     caseNow(i).NPV = profit_sum;
     caseNow(i).PI  = caseNow(i).NPV / c_investment;
     caseNow(i).CC  = CC;
 
-    allCases.NPV(i)                = caseNow(i).NPV;
-    allCases.PI(i)                 = caseNow(i).PI;
+    allCases.NPV(i)= caseNow(i).NPV;
+    allCases.PI(i) = caseNow(i).PI;
 
     % List of interests, just for after revision work, not to modify above
     % I am creating a new for loop. 
     allCases.CC_list = CC_list;
     caseNow(i).CC_list = CC_list;
 
-    for i_CC = 1:length(CC_list)
-        CC_now = CC_list(i_CC);
-        profit_sum = 0;
-        
-        for i_NPV = 1:caseNow(i).N_year
-            i_before = caseNow(i).NPV_indices(i_NPV);
-            i_after  = caseNow(i).NPV_indices(i_NPV+1);
-            profit_i = diff(caseNow(i).cumulative_revenue([i_before, i_after]));
-            
-            profit_sum = profit_sum + profit_i/(1 + CC_now)^i_NPV;
-            
-        end
-    
-        caseNow(i).NPV_list(i_CC) = profit_sum;
-        caseNow(i).PI_list(i_CC)  = profit_sum / c_investment;
-    
-    end
+    profit_per = diff(caseNow(i).cumulative_revenue(caseNow(i).NPV_indices))';
+    discounted_mat = profit_per./((1 + CC_list).^((1:caseNow(i).N_year)'));
+    caseNow(i).NPV_list = sum(discounted_mat);
+    caseNow(i).PI_list  = caseNow(i).NPV_list / c_investment;
 
-    allCases.NPV_list(i,:)                = caseNow(i).NPV_list;
-    allCases.PI_list(i,:)                 = caseNow(i).PI_list;   
+    allCases.NPV_list(i,:) = caseNow(i).NPV_list;
+    allCases.PI_list(i,:)  = caseNow(i).PI_list;   
 
+    SOH_per = -diff(caseNow(i).SOH(caseNow(i).NPV_indices))';
+    
+    allCases.LambdaExp_list(i,:) = sum(discounted_mat.*SOH_per/mean(SOH_per)/c_investment);
 
     % This is for daily interest thing. 
-    allCases.CC_list_daily = CC_list/365;
-    caseNow(i).CC_list_daily = CC_list/365;
+    allCases.CC_list_daily = (1 + CC_list).^(1/365)-1;
+    caseNow(i).CC_list_daily = allCases.CC_list_daily;
 
     for i_CC = 1:length(allCases.CC_list_daily)
         CC_now = allCases.CC_list_daily(i_CC);

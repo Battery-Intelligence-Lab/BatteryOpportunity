@@ -10,16 +10,14 @@ idc = readmatrix('data/idc_positive_dummy.csv')';
 study_name = "ls_window";
 
 % load both lambda sensitivity  
-now_mean = load_case(folder_mean, "mean_window");
-[now_mean, all_mean] = process_and_verify(now_mean);
+meann = process_and_verify(load_case(folder_mean, "mean_window"));
 
 % % load both lambda sensitivity  
 % now_geo = load_case(folder_mean, "geo_mean_window");
 % [now_geo, all_geo] = process_and_verify(now_geo);
 
 % load both lambda sensitivity  
-now_both = load_case(folder_sensitivity, "both");
-[now_both, all_both] = process_and_verify(now_both);
+both = process_and_verify(load_case(folder_sensitivity, "both"));
 
 % path = fullfile(folder, study_name + "_*.mat");
 % dirs = dir(path);
@@ -56,15 +54,13 @@ fig1=figure('Units','inches',...
 'Position',[x0 y0 (x0+width) (y0+height)],...
 'PaperPositionMode','auto');
 
-time_d = (0:length(now_mean(end).lambda_cal)-1);
+time_d = (0:length(meann.now(end).lambda_cal)-1);
 time_y = time_d/365; % Because it is daily updated. 
 
 
-plot(time_y, now_mean(end).lambda_cal, lw{:}); hold on;
-ylim([4,6.4]);
-xlim([-0.2,20]);
-%yyaxis right;
-%plot(now_mean(end).time_y, now_mean(end).SOH)
+plot(time_y, meann.now(end).lambda_cal, lw{:}); hold on;
+ylim([4,6.5]);
+xlim([-0.1,20]);
 
 
 ax = gca;
@@ -81,33 +77,34 @@ set(gcf,'renderer','Painters')
 
 grid on; ylabel('Estimated \lambda (-)'); 
 xlabel('Time (years)');
-rectangle('Position', [-1, 4, 1.4, 1], 'FaceColor', [0.3 0.3 0.3 0.25], 'EdgeColor', 'None');
+rectangle('Position', [-0.1, 4, 1.02, 2.7], 'FaceColor', [0.3 0.3 0.3 0.25], 'EdgeColor', 'None');
 
-annotation('arrow',[0.15,0.24],[0.32,0.41])
+annotation('arrow',[0.17,0.22],[0.22,0.3])
 
-N_end = 60;
-ax2 = axes('Position',[.30 .32 .65 .3]);
+N_end = 365;
+ax2 = axes('Position',[.25 .36 .71 .3]);
 box on
-plot(time_d(1:N_end),now_mean(end).lambda_cal(1:N_end),lw{:});
-grid on;
-ax2.Color = 0.9*[1,1,1];
+plot(time_d(1:N_end),meann.now(end).lambda_cal(1:N_end),lw{:});
+%grid on;
+ax2.Color = [0.3 0.3 0.3 0.25]; %0.9*[1,1,1];
 xlabel('Time (days)')
 ax2.YLim =[0, 6.5];
 ax2.YTick = [0, 2, 4, 6];
-ax2.XLim =[-1, 60];
+ax2.XLim =[-1, 365];
 set(ax2,...
 'Units','normalized',...
 'FontUnits','points',...
 'FontWeight','normal',...
 'FontSize',text_font*0.95,...
 'FontName','Times');
-
+fig1.Color = [1,1,1];
 plt_name = "movMean_lambda";
-
+set(fig1, 'InvertHardCopy', 'off');
 print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
 print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
 savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
-
+fig1.PaperSize = fig1.PaperPosition(3:4);
+print(fig1, fullfile(plot_folder, plt_name + ".pdf"), '-dpdf');
 
 %set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
 
@@ -116,13 +113,13 @@ savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
 windows = [7, 15, 30, 60, 90, 180, 365];
 
 figure; 
-plot(windows, all_mean.revenue_at_EOL);
+plot(windows, meann.all.revenue_at_EOL);
 
 
 %%
 
 figure; 
-plot(all_both.lambda_cal, all_both.revenue_at_EOL); hold on; 
+plot(both.all.lambda_cal, both.all.revenue_at_EOL); hold on; 
 % yline(now_mix{1}.cumulative_revenue(end), 'r--', lw2{:})
 % yline(now_mix{2}.cumulative_revenue(end), 'b--', lw2{:})
 % yline(now_mix{3}.cumulative_revenue(end), 'g--', lw2{:})
@@ -132,13 +129,13 @@ plot(all_both.lambda_cal, all_both.revenue_at_EOL); hold on;
 % yline(now_mppt(1).cumulative_revenue(end), 'r:', lw2{:})
 % yline(now_mppt(2).cumulative_revenue(end), 'b:', lw2{:})
 
-yline(now_mean(1).cumulative_revenue(end), 'r-.', lw2{:})
-yline(now_mean(2).cumulative_revenue(end), 'b-.', lw2{:})
-yline(now_mean(3).cumulative_revenue(end), 'g-.', lw2{:})
-yline(now_mean(4).cumulative_revenue(end), 'c-.', lw2{:})
-yline(now_mean(5).cumulative_revenue(end), 'k-.', lw2{:})
-yline(now_mean(6).cumulative_revenue(end), 'r-.', lw2{:})
-yline(now_mean(7).cumulative_revenue(end), 'r-.', lw2{:})
+yline(meann.now(1).cumulative_revenue(end), 'r-.', lw2{:})
+yline(meann.now(2).cumulative_revenue(end), 'b-.', lw2{:})
+yline(meann.now(3).cumulative_revenue(end), 'g-.', lw2{:})
+yline(meann.now(4).cumulative_revenue(end), 'c-.', lw2{:})
+yline(meann.now(5).cumulative_revenue(end), 'k-.', lw2{:})
+yline(meann.now(6).cumulative_revenue(end), 'r-.', lw2{:})
+yline(meann.now(7).cumulative_revenue(end), 'r-.', lw2{:})
 
 % yline(now_geo(1).cumulative_revenue(end), 'r--', lw2{:})
 % yline(now_geo(2).cumulative_revenue(end), 'b--', lw2{:})

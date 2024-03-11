@@ -19,30 +19,32 @@ both = process_and_verify(load_case(folder, "both"));
 plt_common;
 
 %% Plot idc:
-plt_idc(idc);
+%plt_idc(idc);
 
 %% Revenue by lambda cyc/cal (after revision)
-close all;
+%close all;
 %plt_rev_by_lambda(cal, cyc, both);
 
 %% NEW FIGURE best profit vs. interest rate.    
 close all;
 %plt_profit_vs_interest(cal, cyc, both);
-
-
-%% NEW FIGURE best profit vs. interest rate. interpolated
-close all;
+%plt_profit_vs_interest_daily(cal, cyc, both);
 %plt_profit_vs_interest_interpolated(cal,cyc,both);
+plt_lambdaExp_vs_interest_interpolated(cal,cyc,both);
+
+%% New figure: optimal lambda 
+
+plt_interest_vs_optimal_lambda(cal, cyc, both);
 
 %% NEW FIGURE best profit vs. interest rate. -> LOG version
-close all;
+%close all;
 %plt_profit_vs_interest_log(cal, cyc, both);
 
 %% FEC and lifetime. 
 %plt_FEC_life_vs_lambda(cal, cyc, both);
 
 %% Dave figure (after revision) 
-close all;
+%close all;
 %plt_summary(cal, cyc, both);
 
 
@@ -51,5 +53,5 @@ close all;
 
 
 %% Qlos_cal  Qlos_cyc 
-close all;
-plt_cal_cyc_portions(cal, cyc, both);
+%close all;
+%plt_cal_cyc_portions(cal, cyc, both);
