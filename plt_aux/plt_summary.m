@@ -33,10 +33,10 @@ for i=1:2
   grid(ha(i),'on')
 
 end
-t_sel = 100;
+t_sel = 1000;
 i0 = 1;
 for i1 = iall
-plot(ha(1), both.now(i1).time_y(1:t_sel:end), both.now(i1).SOH(1:t_sel:end)*100,lw{:},'color',colors(i0,:));
+plot(ha(1), both.now(i1).time_y([1,end]), both.now(i1).SOH([1,end])*100,lw{:},'color',colors(i0,:));
 i0 = i0+1;
 end
 xlim([2,50]);
@@ -56,7 +56,7 @@ y_mid = now_data.SOH(i_mid)*100;
 % 
 % theta_mid = rad2deg(atan2(dy_mid,dx_mid));
 
-text(ha(1), x_mid+1.5, y_mid-3, "heavy usage",'Rotation',-79, annot_set{:});
+text(ha(1), x_mid+1.5, y_mid-3, "heavy usage",'Rotation',-79, annot_set{:},'color',red);
 
 now_data = both.now(28);
 i_mid = round(length(now_data.time_y)/2);
@@ -68,7 +68,7 @@ y_mid = now_data.SOH(i_mid)*100;
 % 
 % theta_mid = rad2deg(atan2(dy_mid,dx_mid));
 
-text(ha(1), x_mid+5.5, y_mid-3, "moderate usage",'Rotation',-44, annot_set{:});
+text(ha(1), x_mid+5.5, y_mid-3, "moderate usage",'Rotation',-44, annot_set{:},'color',yellow);
 
 
 now_data = both.now(30);
@@ -81,7 +81,7 @@ y_mid = now_data.SOH(i_mid)*100;
 % 
 % theta_mid = rad2deg(atan2(dy_mid,dx_mid));
 
-text(ha(1), x_mid+1, y_mid, "light usage",'Rotation',-25, annot_set{:});
+text(ha(1), x_mid+1, y_mid, "light usage",'Rotation',-25, annot_set{:},'color',green);
 
 i0 = 1;
 for i1 = iall
@@ -120,9 +120,9 @@ xlabel('Time');
 
 text(ha(2), 46, 117344, "End-of-life returns per usage",'Rotation',-21, annot_set{:});
 annotation('textarrow',[0.70 0.44],[0.48 0.45],'String','Maximum revenue\newlinefor the best usage','FontName','Times','FontSize',text_font);
-text(ha(2), 33, 82294, "long life, low rate",'Rotation',11, annot_set{:});
-text(ha(2), 4, 65000, "short life, high rate",'Rotation',70, annot_set{:});
-text(ha(2), 16, 101000, "balanced life and rate",'Rotation',40, annot_set{:});
+text(ha(2), 33, 82294, "long life, low rate",'Rotation',11, annot_set{:},'color',green);
+text(ha(2), 4, 65000, "short life, high rate",'Rotation',70, annot_set{:},'color',red);
+text(ha(2), 16, 101000, "balanced life and rate",'Rotation',40, annot_set{:},'color',yellow);
 
 
 plt_name = "summary";

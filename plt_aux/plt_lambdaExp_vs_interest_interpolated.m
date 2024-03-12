@@ -6,7 +6,7 @@ fig1=figure('Units','inches',...
 
 N_CC = length(both.all.CC_list);
 my_CC_to_plot = [0, 0.01, 0.02, 0.03, 0.05, 0.08, 0.12, 0.2];
-iCC_to_plot = interp1(both.all.CC_list,1:length(both.all.CC_list), my_CC_to_plot);
+iCC_to_plot = round(interp1(both.all.CC_list,1:length(both.all.CC_list), my_CC_to_plot));
 CC_to_plot = both.all.CC_list(iCC_to_plot);
 
 method = 'spline';

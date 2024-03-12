@@ -9,8 +9,7 @@ folder = 'results/sensitivity_2023_09_13_real';
 idc = readmatrix('data/idc_positive_dummy.csv')';
 
 % load both lambda sensitivity  
-now_both = load_case(folder, "both");
-[now_both, all_both] = process_and_verify(now_both);
+both = process_and_verify(load_case(folder, "both"));
 
 % Don't forget that we probably didn't save the very initial value of the things.
 
@@ -28,9 +27,9 @@ plot_folder = "plots";
 avg_horizon = 24*7; % 1 week of horizon
 cost_whole = 192*250/0.2;
 
-i_now = find(all_both.lambda_cyc == 6);
+i_now = find(both.all.lambda_cyc == 6);
 
-caseNow = now_both(i_now);
+caseNow = both.now(i_now);
 
 dt = caseNow.settings.dt; 
 N_avg = avg_horizon/dt; 
@@ -71,25 +70,30 @@ writetable(T, "estimation_example.csv");
 
 Enom = 192; % 192 kWhcap
 width  = 3.5; % 3.5 inch / 9 cm 
-height = width/golden_ratio;
+height = width/golden_ratio/1.5;
 fig1=figure('Units','inches',...
 'Position',[x0 y0 (x0+width) (y0+height)],...
 'PaperPositionMode','auto');
 
 
-plfit = polyfit(Qtot_avg,  revenue_sum,1);
+plfit = [revenue_sum/Qtot_avg, 0];           %polyfit(Qtot_avg,  revenue_sum,1');
 line_val = polyval(plfit, Qtot_avg);
 
-scatter(Qtot_avg*100, revenue_sum,'.'); hold on;
+scatter(Qtot_avg*100, revenue_sum,'.','MarkerEdgeColor', 'flat', 'CData',viridis(length(Qtot_avg))); hold on;
 plot(Qtot_avg*100,line_val,'LineWidth',1.3);
 ylabel('Revenue (EUR)');
 xlim([0.004, 0.0141])
 
 grid on; xlabel('Qloss (%)'); 
 
-leg = legend('Qloss', 'LS-fitting', 'Location','northwest');
+leg = legend('Qloss', 'Least-squares fit', 'Location','northwest');
 
 leg.FontSize = text_font;
+colormap(viridis); % Set colormap to viridis
+cbar = colorbar; % Add a colorbar
+cbar.Ticks = [0 1]; % Set ticks at the beginning and end
+cbar.TickLabels = {'Beg.\newlineof life', 'End\newlineof life'}; % Label the lower and upper limits
+cbar.FontSize = 12;
 
 ax = gca;
 set(gca,...
@@ -98,7 +102,7 @@ set(gca,...
 'FontWeight','normal',...
 'FontSize',text_font,...
 'FontName','Times');
-set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.07))
 set(gcf,'renderer','Painters')
 
 %%
@@ -107,6 +111,58 @@ plt_name = "profit_vs_ageing_LS";
 print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
 print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
 savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
+fig1.PaperSize = fig1.PaperPosition(3:4);
+print(fig1, fullfile(plot_folder, plt_name + ".pdf"), '-dpdf');
+
+
+%% Estimated weekly lambda
+close all
+Enom = 192; % 192 kWhcap
+width  = 3.5; % 3.5 inch / 9 cm 
+height = width/golden_ratio/1.5;
+fig1=figure('Units','inches',...
+'Position',[x0 y0 (x0+width) (y0+height)],...
+'PaperPositionMode','auto');
+
+scatter(Qtot_avg*100, lambda_per_Q,'.','MarkerEdgeColor', 'flat', 'CData',viridis(length(Qtot_avg))); hold on;
+%plot(Qtot_avg*100,ones(size(Qtot_avg))*mean(lambda_per_Q),'LineWidth',1.3);
+ylabel('Weekly \lambda (-)');
+xlim([0.004, 0.0145])
+ylim([0,14])
+yticks(0:2:15)
+
+grid on; xlabel('Weekly Qloss (%)'); 
+
+%leg = legend('', "Mean \lambda"+sprintf('=%4.1f',mean(lambda_per_Q)), 'Location','northwest');
+%leg.FontSize = text_font;
+
+yline(mean(lambda_per_Q),'-',"Mean \lambda="+sprintf('%4.1f',mean(lambda_per_Q)),'LabelVerticalAlignment',...
+    'bottom','FontName','Times','FontSize',text_font*1.2,'LabelHorizontalAlignment','right',...
+    'LineWidth',1.5,'Color','b')
+
+colormap(viridis); % Set colormap to viridis
+cbar = colorbar; % Add a colorbar
+cbar.Ticks = [0 1]; % Set ticks at the beginning and end
+cbar.TickLabels = {'Beg.\newlineof life', 'End\newlineof life'}; % Label the lower and upper limits
+cbar.FontSize = 12;
+
+ax = gca;
+set(gca,...
+'Units','normalized',...
+'FontUnits','points',...
+'FontWeight','normal',...
+'FontSize',text_font,...
+'FontName','Times');
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.07))
+set(gcf,'renderer','Painters')
+%%
+plt_name = "profit_vs_lambda_LS";
+
+print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
+print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
+savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
+fig1.PaperSize = fig1.PaperPosition(3:4);
+print(fig1, fullfile(plot_folder, plt_name + ".pdf"), '-dpdf');
 
 
 %% Gradient descent: 

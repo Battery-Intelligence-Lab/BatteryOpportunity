@@ -23,14 +23,14 @@ plt_common;
 
 %% Revenue by lambda cyc/cal (after revision)
 %close all;
-%plt_rev_by_lambda(cal, cyc, both);
+plt_rev_by_lambda(cal, cyc, both);
 
 %% NEW FIGURE best profit vs. interest rate.    
 close all;
 %plt_profit_vs_interest(cal, cyc, both);
 %plt_profit_vs_interest_daily(cal, cyc, both);
-%plt_profit_vs_interest_interpolated(cal,cyc,both);
-plt_lambdaExp_vs_interest_interpolated(cal,cyc,both);
+plt_profit_vs_interest_interpolated(cal,cyc,both);
+%plt_lambdaExp_vs_interest_interpolated(cal,cyc,both);
 
 %% New figure: optimal lambda 
 
@@ -45,7 +45,7 @@ plt_interest_vs_optimal_lambda(cal, cyc, both);
 
 %% Dave figure (after revision) 
 %close all;
-%plt_summary(cal, cyc, both);
+plt_summary(cal, cyc, both);
 
 
 %% Revenue/ageing/cost_whole:

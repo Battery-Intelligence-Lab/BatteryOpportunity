@@ -4,7 +4,7 @@ allCases = [];
 
 CC =  0.05; % Yearly interest. 
 
-CC_list = 0:0.01:0.30;
+CC_list = 0:0.01:0.50;
 
 for i=1:length(caseNow)
     EOL = caseNow(i).settings.EOL;
