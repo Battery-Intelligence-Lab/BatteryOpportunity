@@ -1,19 +1,24 @@
 clear variables; close all; clc;
 addpath('plt_aux'); 
 
-
 folder = 'results/sensitivity_2023_09_13_real';
 
+temp_cal = load_case(folder, "lambda_cal");
+temp_cyc = load_case(folder, "lambda_cyc");
+temp_both = load_case(folder, "both");
+
+
+
 idc = readmatrix('data/idc_positive_dummy.csv')';
-
-% load cal lambda sensitivity
-cal = process_and_verify(load_case(folder, "lambda_cal"));
-
-% load cyc lambda sensitivity
-cyc = process_and_verify(load_case(folder, "lambda_cyc"));
+%%
+% % load cal lambda sensitivity
+cal = process_and_verify(temp_cal);
+% 
+% % load cyc lambda sensitivity
+cyc = process_and_verify(temp_cyc);
 
 % load both lambda sensitivity  
-both = process_and_verify(load_case(folder, "both"));
+both = process_and_verify(temp_both);
 
 % Settings:
 plt_common;
@@ -28,7 +33,7 @@ plt_rev_by_lambda(cal, cyc, both);
 %% NEW FIGURE best profit vs. interest rate.    
 close all;
 %plt_profit_vs_interest(cal, cyc, both);
-%plt_profit_vs_interest_daily(cal, cyc, both);
+plt_profit_vs_interest_daily(cal, cyc, both);
 plt_profit_vs_interest_interpolated(cal,cyc,both);
 %plt_lambdaExp_vs_interest_interpolated(cal,cyc,both);
 

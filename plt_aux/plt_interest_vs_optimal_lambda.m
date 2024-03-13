@@ -1,5 +1,6 @@
 function plt_interest_vs_optimal_lambda(cal, cyc, both)
 plt_common;
+height_ = height_/1.5;
 fig1=figure('Units','inches',...
 'Position',[x0 y0 (x0+width_) (y0+height_)],...
 'PaperPositionMode','auto');
@@ -43,7 +44,7 @@ plot(both.all.CC_list*100, optimal_lambda,'LineWidth',1.3); hold on;
 plot(both.all.CC_list*100, max_PIs./(1+both.all.CC_list),'--','LineWidth',1.3); 
 
 xlabel('Interest rate (%)'); 
-ylabel('Profitability index (-)');
+ylabel('Optimal \lambda and PI (-)');
 legend('Optimal \lambda', 'PI/(1+i)') %/(1+both.all.CC_list)
 
 

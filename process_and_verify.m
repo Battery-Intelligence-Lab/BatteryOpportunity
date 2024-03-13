@@ -48,7 +48,7 @@ for i=1:length(caseNow)
         i_after  = caseNow(i).NPV_indices(i_NPV+1);
         profit_i = diff(caseNow(i).cumulative_revenue([i_before, i_after]));
         
-        profit_sum = profit_sum + profit_i/(1 + CC)^i_NPV;
+        profit_sum = profit_sum + profit_i/(1 + CC)^(i_NPV);
         caseNow(i).yearly_profit(i_NPV+1) = profit_sum;
         caseNow(i).profit_years(i_NPV) = i_NPV-1;
     end
