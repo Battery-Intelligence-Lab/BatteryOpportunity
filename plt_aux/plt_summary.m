@@ -86,6 +86,7 @@ text(ha(1), x_mid+1, y_mid, "light usage",'Rotation',-25, annot_set{:},'color',g
 i0 = 1;
 for i1 = iall
 plot(ha(2), both.now(i1).profit_years, both.now(i1).yearly_profit,lw{:},'color',colors(i0,:)); hold on;
+plot(ha(2), both.now(i1).profit_years(end), both.now(i1).yearly_profit(end),'o','color',colors(i0,:),'MarkerFaceColor',colors(i0,:),'MarkerSize',9);
 i0 = i0+1;
 end
 %xlim([0,50]);
@@ -101,7 +102,7 @@ yearly_profit_end_interp = interp1(profit_years_end(sel), yearly_profit_end(sel)
 
 [max_y, max_i] = max(yearly_profit_end_interp);
 
-plot(ha(2), profit_years_end_interp, yearly_profit_end_interp, '--'); hold on;
+plot(ha(2), profit_years_end_interp, yearly_profit_end_interp, 'k--'); hold on;
 plot(profit_years_end_interp(max_i), max_y, 'pentagram','MarkerSize',10,'MarkerFaceColor','b','MarkerEdgeColor','b')
 
 ha(1).YLabel.String = 'State of health';
@@ -118,11 +119,11 @@ set(gcf,'renderer','Painters');
 
 xlabel('Time');
 
-text(ha(2), 46, 117344, "End-of-life returns per usage",'Rotation',-21, annot_set{:});
+text(ha(2), 46, 117344, "End-of-life returns",'Rotation',-21, annot_set{:});
 annotation('textarrow',[0.70 0.44],[0.48 0.45],'String','Maximum revenue\newlinefor the best usage','FontName','Times','FontSize',text_font);
 text(ha(2), 33, 82294, "long life, low rate",'Rotation',11, annot_set{:},'color',green);
 text(ha(2), 4, 65000, "short life, high rate",'Rotation',70, annot_set{:},'color',red);
-text(ha(2), 16, 101000, "balanced life and rate",'Rotation',40, annot_set{:},'color',yellow);
+text(ha(2), 16, 101000, "balanced use",'Rotation',40, annot_set{:},'color',yellow);
 
 
 plt_name = "summary";
