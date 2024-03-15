@@ -6,3 +6,4 @@
 # Except directories
 !.gitignore
 !before_revision/*
+!final_submission/*

@@ -51,10 +51,10 @@ semilogx(both.all.lambda_cal, scaled_values_both, 's-', 'Color', 'none', 'Handle
 
 xline(6,'-','\lambda = 6','LabelVerticalAlignment','bottom','FontName','Times','FontSize',text_font*1.2,'LabelHorizontalAlignment','left')
 
-leg = legend('only \lambda_{cal}', 'only \lambda_{cyc}', 'both \lambda_{cal}, \lambda_{cyc}',...
-       'Location','northwest');
-
-leg.FontSize = text_font;
+% leg = legend('only \lambda_{cal}', 'only \lambda_{cyc}', 'both \lambda_{cal}, \lambda_{cyc}',...
+%        'Location','northwest');
+% 
+% leg.FontSize = text_font;
 
 % New_XTickLabel = get(gca,'xtick');
 % set(gca,'XTickLabel',New_XTickLabel);
@@ -77,7 +77,8 @@ plt_name = "profit_vs_lambda";
 print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
 print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
 savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
-
+fig1.PaperSize = fig1.PaperPosition(3:4);
+print(fig1, fullfile(plot_folder, plt_name + ".pdf"), '-dpdf');
 
 % PI by lambda cyc/cal: 
 Enom = 192; % 192 kWhcap
@@ -119,10 +120,10 @@ ylim([150,1600])
 xline(3,'-','\lambda = 3','LabelVerticalAlignment','bottom','FontName','Times','FontSize',text_font*1.2,'LabelHorizontalAlignment','left')
 
 
-leg = legend('only \lambda_{cal}', 'only \lambda_{cyc}', 'both \lambda_{cal}, \lambda_{cyc}',...
-       'Location','northwest');
-
-leg.FontSize = text_font;
+% leg = legend('only \lambda_{cal}', 'only \lambda_{cyc}', 'both \lambda_{cal}, \lambda_{cyc}',...
+%        'Location','northwest');
+% 
+% leg.FontSize = text_font;
 
 ax = gca;
 ax.XTick = [0.001, 0.01, 0.1, 1, 9.999999999, 100];
@@ -144,4 +145,6 @@ plt_name = "PI_vs_lambda";
 print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
 print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
 savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
+fig1.PaperSize = fig1.PaperPosition(3:4);
+print(fig1, fullfile(plot_folder, plt_name + ".pdf"), '-dpdf');
 end

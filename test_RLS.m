@@ -155,8 +155,111 @@ set(gca,...
 'FontName','Times');
 set(gca,'LooseInset',max(get(gca,'TightInset'), 0.07))
 set(gcf,'renderer','Painters')
-%%
+%
 plt_name = "profit_vs_lambda_LS";
+
+print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
+print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
+savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
+fig1.PaperSize = fig1.PaperPosition(3:4);
+print(fig1, fullfile(plot_folder, plt_name + ".pdf"), '-dpdf');
+
+%% Limited to one year. 
+close all
+Enom = 192; % 192 kWhcap
+width  = 3.5; % 3.5 inch / 9 cm 
+height = width/golden_ratio/1.5;
+fig1=figure('Units','inches',...
+'Position',[x0 y0 (x0+width) (y0+height)],...
+'PaperPositionMode','auto');
+
+
+weeks=52; % limit to 1 year. 
+
+scatter(Qtot_avg(1:weeks)*100, lambda_per_Q(1:weeks),'.','MarkerEdgeColor', 'flat', 'CData',viridis(length(Qtot_avg(1:weeks)))); hold on;
+%plot(Qtot_avg*100,ones(size(Qtot_avg))*mean(lambda_per_Q),'LineWidth',1.3);
+ylabel('Weekly \lambda (-)');
+xlim([0.004, 0.0145])
+ylim([0,14])
+yticks(0:2:15)
+
+grid on; xlabel('Weekly Qloss (%)'); 
+
+%leg = legend('', "Mean \lambda"+sprintf('=%4.1f',mean(lambda_per_Q)), 'Location','northwest');
+%leg.FontSize = text_font;
+
+yline(mean(lambda_per_Q(1:weeks)),'-',"Mean \lambda="+sprintf('%4.1f',mean(lambda_per_Q(1:weeks))),'LabelVerticalAlignment',...
+    'bottom','FontName','Times','FontSize',text_font*1.2,'LabelHorizontalAlignment','right',...
+    'LineWidth',1.5,'Color','b')
+
+colormap(viridis); % Set colormap to viridis
+cbar = colorbar; % Add a colorbar
+cbar.Ticks = [0 1]; % Set ticks at the beginning and end
+cbar.TickLabels = {'Beg.\newlineof year', 'End\newlineof year'}; % Label the lower and upper limits
+cbar.FontSize = 12;
+
+ax = gca;
+set(gca,...
+'Units','normalized',...
+'FontUnits','points',...
+'FontWeight','normal',...
+'FontSize',text_font,...
+'FontName','Times');
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.07))
+set(gcf,'renderer','Painters')
+%
+plt_name = "profit_vs_lambda_LS_first_year";
+
+print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
+print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
+savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
+fig1.PaperSize = fig1.PaperPosition(3:4);
+print(fig1, fullfile(plot_folder, plt_name + ".pdf"), '-dpdf');
+
+%% Limited to last year. 
+close all
+Enom = 192; % 192 kWhcap
+width  = 3.5; % 3.5 inch / 9 cm 
+height = width/golden_ratio/1.5;
+fig1=figure('Units','inches',...
+'Position',[x0 y0 (x0+width) (y0+height)],...
+'PaperPositionMode','auto');
+
+
+weeks=52; % limit to 1 year. 
+
+scatter(Qtot_avg(end-weeks+1:end)*100, lambda_per_Q(end-weeks+1:end),'.','MarkerEdgeColor', 'flat', 'CData',viridis(length(Qtot_avg(end-weeks+1:end)))); hold on;
+ylabel('Weekly \lambda (-)');
+xlim([0.004, 0.0145])
+ylim([0,14])
+yticks(0:2:15)
+
+grid on; xlabel('Weekly Qloss (%)'); 
+
+%leg = legend('', "Mean \lambda"+sprintf('=%4.1f',mean(lambda_per_Q)), 'Location','northwest');
+%leg.FontSize = text_font;
+
+yline(mean(lambda_per_Q(end-weeks+1:end)),'-',"Mean \lambda="+sprintf('%4.1f',mean(lambda_per_Q(end-weeks+1:end))),'LabelVerticalAlignment',...
+    'bottom','FontName','Times','FontSize',text_font*1.2,'LabelHorizontalAlignment','right',...
+    'LineWidth',1.5,'Color','b')
+
+colormap(viridis); % Set colormap to viridis
+cbar = colorbar; % Add a colorbar
+cbar.Ticks = [0 1]; % Set ticks at the beginning and end
+cbar.TickLabels = {'Beg.\newlineof year', 'End\newlineof year'}; % Label the lower and upper limits
+cbar.FontSize = 12;
+
+ax = gca;
+set(gca,...
+'Units','normalized',...
+'FontUnits','points',...
+'FontWeight','normal',...
+'FontSize',text_font,...
+'FontName','Times');
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.07))
+set(gcf,'renderer','Painters')
+%
+plt_name = "profit_vs_lambda_LS_last_year";
 
 print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
 print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');

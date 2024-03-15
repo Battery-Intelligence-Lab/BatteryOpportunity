@@ -58,7 +58,7 @@ c_invest = Enom*250;
 
 
 width  = 3.5; % 3.5 inch / 9 cm 
-height = width/golden_ratio/1.5;
+height = width/golden_ratio/1.48;
 fig1=figure('Units','inches',...
 'Position',[x0 y0 (x0+width) (y0+height)],...
 'PaperPositionMode','auto');
@@ -74,6 +74,7 @@ c.Label.String = ('Revenue at EOL (EUR/kWh_{cap})');
 c.Label.FontSize = text_font;
 %clim([1100,1700])
 
+ax = gca;
 
 set(gca,...
 'Units','normalized',...
@@ -83,12 +84,17 @@ set(gca,...
 'FontName','Times');
 set(gca,'LooseInset',max(get(gca,'TightInset'), 0.12))
 set(gcf,'renderer','Painters')
+ax.Position(4) =ax.Position(4)*1.05;
+ax.Position(2) = ax.Position(2) + 0.015;
+c.Position(2) = 0.2;
 
 plt_name = "sweep_2D";
 
 print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
 print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
 savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
+fig1.PaperSize = fig1.PaperPosition(3:4);
+print(fig1, fullfile(plot_folder, plt_name + ".pdf"), '-dpdf');
 %%
 close all;
 Enom  = 192;

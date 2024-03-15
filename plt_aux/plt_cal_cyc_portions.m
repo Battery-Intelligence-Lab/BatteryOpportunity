@@ -41,7 +41,8 @@ plt_name = "ageing_vs_lambda_cal";
 print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
 print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
 savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
-
+fig1.PaperSize = fig1.PaperPosition(3:4);
+print(fig1, fullfile(plot_folder, plt_name + ".pdf"), '-dpdf');
 %----------------------- versus lambda cyc ------------------------
 
 price_per_cap = 250; 
@@ -90,7 +91,8 @@ plt_name = "ageing_vs_lambda_cyc";
 print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
 print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
 savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
-
+fig1.PaperSize = fig1.PaperPosition(3:4);
+print(fig1, fullfile(plot_folder, plt_name + ".pdf"), '-dpdf');
 %----------------------- versus BOTH ---------------------------------------
 
 price_per_cap = 250; 
@@ -141,4 +143,6 @@ plt_name = "ageing_vs_lambda_both";
 print(fig1, fullfile(plot_folder, plt_name + ".png"), '-dpng','-r800');
 print(fig1, fullfile(plot_folder, plt_name + ".eps"), '-depsc');
 savefig(fig1, fullfile(plot_folder, plt_name + ".fig"));
+fig1.PaperSize = fig1.PaperPosition(3:4);
+print(fig1, fullfile(plot_folder, plt_name + ".pdf"), '-dpdf');
 end

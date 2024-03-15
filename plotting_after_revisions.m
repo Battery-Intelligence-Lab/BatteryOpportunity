@@ -43,7 +43,7 @@ plt_interest_vs_optimal_lambda(cal, cyc, both);
 
 %% NEW FIGURE best profit vs. interest rate. -> LOG version
 %close all;
-%plt_profit_vs_interest_log(cal, cyc, both);
+plt_profit_vs_interest_log(cal, cyc, both);
 
 %% FEC and lifetime. 
 %plt_FEC_life_vs_lambda(cal, cyc, both);
@@ -54,9 +54,9 @@ plt_summary(cal, cyc, both);
 
 
 %% Revenue/ageing/cost_whole:
-%plt_lambda_exp(cal,cyc,both);
+plt_lambda_exp(cal,cyc,both);
 
 
 %% Qlos_cal  Qlos_cyc 
 %close all;
-%plt_cal_cyc_portions(cal, cyc, both);
+plt_cal_cyc_portions(cal, cyc, both);
