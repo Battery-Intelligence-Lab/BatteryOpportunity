@@ -1,6 +1,6 @@
 function [] = save_plt(fig, plt_path, plt_save, plt_type)
 % This function is to save plot files. 
-% Author: VK
+% Author: Volkan Kumtepeli
 % Date  : 2020.05.06
 
 % Argument order, plt_save, plt_path, type, 

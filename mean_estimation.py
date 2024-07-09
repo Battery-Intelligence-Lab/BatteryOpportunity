@@ -19,7 +19,7 @@ from aux_functions import moving_average_filter, simulate_and_save
 def geo_mean_overflow(iterable): # https://stackoverflow.com/questions/43099542/python-easy-way-to-do-geometric-mean-in-python
     return np.exp(np.log(iterable).mean())
 
-settings = def_settings;
+settings = def_settings
 settings['folderName'] =  'results/mean_window_2023_09_26'
 
 

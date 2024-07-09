@@ -14,7 +14,7 @@ from default_settings import def_settings
 from aux_functions import simulate_and_save
 
 settings = def_settings;
-settings['folderName'] =  'C:/D/OneDrive - Nexus365/Proj/BatteryOpportunityCost/results/optimal_lambda_2023_09_17'
+settings['folderName'] =  'results/optimal_lambda_2023_09_17'
 settings['studyName']  = "mixed"
 #settings['EOL'] = 0.9999
 

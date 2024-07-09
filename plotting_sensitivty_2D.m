@@ -1,6 +1,6 @@
 clear variables; close all; clc;
 
-folder = 'C:/D/OneDrive - Nexus365/Proj/BatteryOpportunityCost/results/optimal_lambda_2023_09_17';
+folder = 'results/optimal_lambda_2023_09_17';
 
 idc = readmatrix('data/idc_positive_dummy.csv')';
 

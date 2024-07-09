@@ -5,7 +5,7 @@ Created on Tue Sep 12 01:26:54 2023
 Testing if gurobipy is faster as cvxpy is taking lots of time to process the problem!
 Moreover it is processing problem at each time step! 
 
-@author: engs2321
+@author: Volkan Kumtepeli
 """
 
 import cvxpy as cp

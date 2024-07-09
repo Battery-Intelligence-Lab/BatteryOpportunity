@@ -1,1 +1,4 @@
 cvxpy
+scikit-learn
+matplotlib
+itertools

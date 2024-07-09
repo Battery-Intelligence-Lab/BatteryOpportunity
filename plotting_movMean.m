@@ -1,9 +1,9 @@
 clear variables; close all; clc;
 
-folder_mean = 'C:/D/OneDrive - Nexus365/Proj/BatteryOpportunityCost/results/mean_window_2023_09_26';
+folder_mean = 'results/mean_window_2023_09_26';
 
 folder_sensitivity = 'results/sensitivity_2023_09_13_real';
-%folder = 'C:\D\OneDrive - Nexus365\Proj\BatteryOpportunityCost\results\ls_window_2023_09_25';
+%folder = 'results\ls_window_2023_09_25';
 
 idc = readmatrix('data/idc_positive_dummy.csv')';
 

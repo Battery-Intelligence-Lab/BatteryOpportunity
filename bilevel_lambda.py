@@ -3,7 +3,7 @@
 Created on Mon Sep 18 05:10:52 2023
 At each step solves an outer optimisation problem to update lambda
 
-@author: engs2321
+@author: Volkan Kumtepeli
 """
 
 import cvxpy as cp
