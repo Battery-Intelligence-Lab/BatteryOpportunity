@@ -41,11 +41,13 @@ a_coeff = (ratio-1)/(both.all.CC_list);
 %plot(both.all.CC_list+1, 1+(both.all.CC_list)*a_coeff);
 
 plot(both.all.CC_list*100, optimal_lambda,'LineWidth',1.3); hold on;
-plot(both.all.CC_list*100, max_PIs./(1+both.all.CC_list),'--','LineWidth',1.3); 
+%plot(both.all.CC_list*100, max_PIs./(1+both.all.CC_list),'--','LineWidth',1.3); 
+plot(both.all.CC_list*100, max_PIs,'--','LineWidth',1.3); 
+
 
 xlabel('Interest rate (%)'); 
 ylabel('Optimal \lambda and PI (-)');
-legend('Optimal \lambda', 'PI/(1+i)') %/(1+both.all.CC_list)
+legend('Optimal \lambda', 'PI') %/(1+both.all.CC_list)
 
 
 % plot(optimal_lambda, max_PIs, 'LineWidth',1.3); hold on;

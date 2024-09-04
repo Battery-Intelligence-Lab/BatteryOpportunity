@@ -20,6 +20,11 @@ cyc = process_and_verify(temp_cyc);
 % load both lambda sensitivity  
 both = process_and_verify(temp_both);
 
+% create a minimal example for NPV
+minimal = create_minimal_NPV_example(temp_both);
+save('minimal_example.mat','-struct', 'minimal');
+
+
 % Settings:
 plt_common;
 
@@ -42,21 +47,21 @@ plt_profit_vs_interest_interpolated(cal,cyc,both);
 plt_interest_vs_optimal_lambda(cal, cyc, both);
 
 %% NEW FIGURE best profit vs. interest rate. -> LOG version
-%close all;
-plt_profit_vs_interest_log(cal, cyc, both);
-
-%% FEC and lifetime. 
-%plt_FEC_life_vs_lambda(cal, cyc, both);
-
-%% Dave figure (after revision) 
-%close all;
-plt_summary(cal, cyc, both);
-
-
-%% Revenue/ageing/cost_whole:
-plt_lambda_exp(cal,cyc,both);
-
-
-%% Qlos_cal  Qlos_cyc 
-%close all;
-plt_cal_cyc_portions(cal, cyc, both);
+% %close all;
+% plt_profit_vs_interest_log(cal, cyc, both);
+% 
+% %% FEC and lifetime. 
+% %plt_FEC_life_vs_lambda(cal, cyc, both);
+% 
+% %% Dave figure (after revision) 
+% %close all;
+% plt_summary(cal, cyc, both);
+% 
+% 
+% %% Revenue/ageing/cost_whole:
+% plt_lambda_exp(cal,cyc,both);
+% 
+% 
+% %% Qlos_cal  Qlos_cyc 
+% %close all;
+% plt_cal_cyc_portions(cal, cyc, both);
