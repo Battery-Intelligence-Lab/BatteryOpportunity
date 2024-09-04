@@ -1,3 +1,10 @@
+# User-defined
+
+# Don't include external packages: 
+cmoecan/*
+tight_subplot.m
+viridis.m
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
